@@ -31,34 +31,38 @@ Source PRD: [FSD: Replace Intraday with SoA Rules](https://farohealth.atlassian.
 | `composite` | `COUNT`, `REL` | The activity runs at offsets (pre, post N) from an anchor, each offset with an optional collection window. |
 | `travel` | `TRAVEL` | Travel of a set duration that arrives before an anchor, with an optional return. |
 | `hospitalization` | `HOSP` | The subject is hospitalized for N hours a day, starting at day start or at an activity. |
+| `sequence` | `SEQUENCE` | Legacy mode: a hand-built day written literally, one slot per statement in time order. Slots are `ACTIVITY DURATION`, `STATE DURATION` or `TRAVEL DURATION`. No rules, no derivation. |
 
 Four rules can start with `COUNT`. The token after it decides: `QUALIFIER` means spacing, `REL` means composite, `BEFORE` or `AFTER` means dependency, and `SEP` or end of input means count.
 
 `ACTIVITY` starts a statement only as a header, so it is always followed by `COLON`.
+
+**Two modes, one lexer.** If the text starts with `SEQUENCE`, the parser reads the whole text with the sequence grammar. Otherwise it uses the rules grammar. A text is one mode from start to end; there is no switching in the middle. Both modes share the same tokens.
 
 ## Dictionary
 
 | Token | Kind | Lexemes | Pattern | Rules | Description |
 | --- | --- | --- | --- | --- | --- |
 | `COUNT` | literal | | `\d+x` | count, dependency, spacing, composite | Occurrences per day, e.g. `3x`. Optional in dependency and composite; in composite the offsets define the count. |
-| `DURATION` | literal | | `\d+(\.\d+)?(min\|m\|h)` | fasting-wait, spacing, composite, travel, hospitalization | Time amount, e.g. `30m`, `90min`, `1.5h`. In hospitalization it is hours per day, from 1h to 24h; the parser checks the range, not the lexer. |
+| `DURATION` | literal | | `\d+(\.\d+)?(min\|m\|h)` | fasting-wait, spacing, composite, travel, hospitalization, sequence | Time amount, e.g. `30m`, `90min`, `1.5h`. In hospitalization it is hours per day, from 1h to 24h; the parser checks the range, not the lexer. |
 | `PERCENT` | literal | | `\d+(\.\d+)?%` | composite | Window as a percentage of the offset, e.g. `10%`. |
-| `ACTIVITY` | string | | `"[^"]+"` | subject, dependency, composite, travel, hospitalization | Activity name in double quotes, e.g. `"Chest X-ray"`. No escapes in the POC. |
+| `ACTIVITY` | string | | `"[^"]+"` | subject, dependency, composite, travel, hospitalization, sequence | Activity name in double quotes, e.g. `"Chest X-ray"`. No escapes in the POC. |
 | `COLON` | separator | `:` | | subject | Ends an activity header. |
-| `SEP` | separator | `;` | `\r?\n` | subject, count, dependency, fasting-wait, spacing, composite, travel, hospitalization | Ends a statement. Humans write newlines, machines write `;`. Repeated, leading and trailing separators are ignored, so blank lines are fine. |
+| `SEP` | separator | `;` | `\r?\n` | subject, count, dependency, fasting-wait, spacing, composite, travel, hospitalization, sequence | Ends a statement. Humans write newlines, machines write `;`. Repeated, leading and trailing separators are ignored, so blank lines are fine. |
 | `COMMA` | separator | `,` | | dependency, composite | List separator. |
 | `WINDOW` | operator | `±` / `+-` | | composite | Collection window for the offset right before it. Followed by `DURATION` or `PERCENT`. `+-` is the ASCII alias. |
 | `DAY_ANCHOR` | keyword | `day-start`, `day-end` | | composite, travel, hospitalization | Start of the day (arrival on site) or end of the day. `day-end` is valid only in composite. |
 | `BEFORE` | keyword | `before` | | dependency, fasting-wait, travel | Dependency: runs before. Fasting/wait: the slot comes before the activity. Travel: arrives before the anchor. |
 | `AFTER` | keyword | `after` | | dependency, fasting-wait | Dependency: runs after. Fasting/wait: the slot comes after the activity. |
-| `STATE` | keyword | `fast`, `wait` | | fasting-wait | Slot type. Starts a fasting or wait statement. |
+| `STATE` | keyword | `fast`, `wait` | | fasting-wait, sequence | Slot type. Starts a fasting or wait statement. In sequence mode, `STATE DURATION` is a fasting or wait slot. |
 | `QUALIFIER` | keyword | `exactly` / `=`, `approximately` / `approx` / `~`, `atleast` / `>=` | | spacing | How strict the gap between occurrences is. Required. |
 | `REL` | keyword | `rel` | | composite | "Relative to". Starts the anchor clause. |
 | `EDGE` | keyword | `start`, `end` | | composite | Which end of the anchor activity the offsets are measured from. Optional, default `start`. |
 | `OCCURRENCE` | keyword | `each`, `first`, `last` | | composite | Which occurrence of the anchor activity to use when it happens more than once that day. Optional, default `each`. |
 | `PRE` | keyword | `pre` | | composite | An occurrence right before the anchor. |
 | `POST` | keyword | `post` | | composite | Occurrences after the anchor. Followed by one or more `DURATION`, each with an optional `WINDOW`. |
-| `TRAVEL` | keyword | `travel` | | travel | Starts a travel statement. |
+| `TRAVEL` | keyword | `travel` | | travel, sequence | Starts a travel statement. In sequence mode, `TRAVEL DURATION` is a travel slot. |
+| `SEQUENCE` | keyword | `sequence` | | sequence | First token of a legacy text. Switches the parser to the sequence grammar for the whole text. |
 | `ADMISSION` | keyword | `admission` | | travel | Hospital admission as the arrival anchor. Valid only on a day with hospitalization. |
 | `RETURN` | keyword | `return` | | travel | Starts the optional return clause. |
 | `RETURN_MODE` | keyword | `none`, `same`, `discharge` | | travel | `none`: no return travel. `same`: the same duration, after day end. `discharge`: after discharge. A `DURATION` in its place means a different return duration. |
@@ -75,6 +79,8 @@ Four rules can start with `COUNT`. The token after it decides: `QUALIFIER` means
 | count | `3x` | `COUNT` |
 | subject | `"PK sampling": 3x rel "IP Administration" pre, post 1h 2h; "Vital Signs": 3x before "PK sampling"; "12-lead ECG": after "Vital Signs"` | `ACTIVITY COLON COUNT REL ACTIVITY PRE COMMA POST DURATION DURATION SEP ACTIVITY COLON COUNT BEFORE ACTIVITY SEP ACTIVITY COLON AFTER ACTIVITY` |
 | subject | `"PK sampling": fast 8h before; after "Vital Signs"; rel "IP Administration" pre, post 1h 2h 4h` | `ACTIVITY COLON STATE DURATION BEFORE SEP AFTER ACTIVITY SEP REL ACTIVITY PRE COMMA POST DURATION DURATION DURATION` |
+| sequence | `sequence; "Vital Signs" 15m; "12 Lead ECG" 8m; "PK Sampling (Serum)" 5m; "IP Administration - Oral" 1m; wait 40m; "PK Sampling (Serum)" 5m` | `SEQUENCE SEP ACTIVITY DURATION SEP ACTIVITY DURATION SEP ACTIVITY DURATION SEP ACTIVITY DURATION SEP STATE DURATION SEP ACTIVITY DURATION` |
+| sequence | `sequence; fast 8h; travel 30m; "Vital Signs" 15m` | `SEQUENCE SEP STATE DURATION SEP TRAVEL DURATION SEP ACTIVITY DURATION` |
 | fasting-wait | `fast 10h before` | `STATE DURATION BEFORE` |
 | fasting-wait | `wait 4h after` | `STATE DURATION AFTER` |
 | spacing | `3x exactly 6h` | `COUNT QUALIFIER DURATION` |
@@ -98,6 +104,24 @@ The first `subject` example is the product scenario (IP Administration with no r
   after "Vital Signs"
 ```
 
+A hand-built day (legacy intraday) in sequence mode, as a human writes it:
+
+```
+sequence
+"Vital Signs" 15m
+"12 Lead ECG" 8m
+"PK Sampling (Serum)" 5m
+"IP Administration - Oral" 1m
+"Vital Signs" 15m
+"12 Lead ECG" 8m
+wait 40m
+"PK Sampling (Serum)" 5m
+"Vital Signs" 15m
+"12 Lead ECG" 8m
+wait 40m
+"PK Sampling (Serum)" 5m
+```
+
 ## Semantics decisions
 
 Not lexer concerns. They are recorded here so the parser and the timeline derivation follow the same rules.
@@ -107,6 +131,9 @@ Not lexer concerns. They are recorded here so the parser and the timeline deriva
 - **Unequal counts pair up to the smaller count:** a single ECG `after "Vital Signs"` (3x) follows the 1st Vital Signs. The unpaired occurrences fall back to CDT order, and the derived trace marks them as unpaired.
 - **Derived waits are output, not input:** "an hour between each occurrence" and "1h - (ECG + Vital Signs)" come from derivation. They have no DSL form.
 - **Product scenario, expected timeline:** Vital Signs and 12-lead ECG run inside the 1h waits between PK draws, so each idle wait is 1h - (Vital Signs + ECG). The product text says "Vital signs and PK Sampling" here; that is a typo for ECG.
+
+- **Sequence mode is literal:** slots run in written order from day start, each for its stated duration. The timeline is the running sum, with no derivation. Legacy days stay in sequence mode until a person or an AI converts them to rules with a separate tool; the parser never converts.
+- **Open (sequence mode):** several activities in one legacy slot, and legacy slot names. Today neither can be written; decide whether to drop them or add grouping (`"A", "B" 23m`) and names.
 
 ## Lexer notes
 

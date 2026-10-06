@@ -59,6 +59,13 @@
         "HOSP"
       ],
       "description": "The subject is hospitalized for N hours a day, starting at day start or at an activity."
+    },
+    {
+      "name": "sequence",
+      "startsWith": [
+        "SEQUENCE"
+      ],
+      "description": "Legacy mode: a hand-built day written literally, one slot per statement in time order. Slots are `ACTIVITY DURATION`, `STATE DURATION` or `TRAVEL DURATION`. No rules, no derivation."
     }
   ],
   "tokens": [
@@ -85,7 +92,8 @@
         "spacing",
         "composite",
         "travel",
-        "hospitalization"
+        "hospitalization",
+        "sequence"
       ],
       "description": "Time amount, e.g. `30m`, `90min`, `1.5h`. In hospitalization it is hours per day, from 1h to 24h; the parser checks the range, not the lexer."
     },
@@ -109,7 +117,8 @@
         "dependency",
         "composite",
         "travel",
-        "hospitalization"
+        "hospitalization",
+        "sequence"
       ],
       "description": "Activity name in double quotes, e.g. `\"Chest X-ray\"`. No escapes in the POC."
     },
@@ -146,7 +155,8 @@
         "spacing",
         "composite",
         "travel",
-        "hospitalization"
+        "hospitalization",
+        "sequence"
       ],
       "description": "Ends a statement. Humans write newlines, machines write `;`. Repeated, leading and trailing separators are ignored, so blank lines are fine."
     },
@@ -252,9 +262,10 @@
       ],
       "pattern": null,
       "rules": [
-        "fasting-wait"
+        "fasting-wait",
+        "sequence"
       ],
-      "description": "Slot type. Starts a fasting or wait statement."
+      "description": "Slot type. Starts a fasting or wait statement. In sequence mode, `STATE DURATION` is a fasting or wait slot."
     },
     {
       "name": "QUALIFIER",
@@ -384,9 +395,25 @@
       ],
       "pattern": null,
       "rules": [
-        "travel"
+        "travel",
+        "sequence"
       ],
-      "description": "Starts a travel statement."
+      "description": "Starts a travel statement. In sequence mode, `TRAVEL DURATION` is a travel slot."
+    },
+    {
+      "name": "SEQUENCE",
+      "kind": "keyword",
+      "lexemes": [
+        {
+          "value": "sequence",
+          "aliases": []
+        }
+      ],
+      "pattern": null,
+      "rules": [
+        "sequence"
+      ],
+      "description": "First token of a legacy text. Switches the parser to the sequence grammar for the whole text."
     },
     {
       "name": "ADMISSION",
@@ -554,6 +581,47 @@
         "POST",
         "DURATION",
         "DURATION",
+        "DURATION"
+      ]
+    },
+    {
+      "rule": "sequence",
+      "text": "sequence; \"Vital Signs\" 15m; \"12 Lead ECG\" 8m; \"PK Sampling (Serum)\" 5m; \"IP Administration - Oral\" 1m; wait 40m; \"PK Sampling (Serum)\" 5m",
+      "tokens": [
+        "SEQUENCE",
+        "SEP",
+        "ACTIVITY",
+        "DURATION",
+        "SEP",
+        "ACTIVITY",
+        "DURATION",
+        "SEP",
+        "ACTIVITY",
+        "DURATION",
+        "SEP",
+        "ACTIVITY",
+        "DURATION",
+        "SEP",
+        "STATE",
+        "DURATION",
+        "SEP",
+        "ACTIVITY",
+        "DURATION"
+      ]
+    },
+    {
+      "rule": "sequence",
+      "text": "sequence; fast 8h; travel 30m; \"Vital Signs\" 15m",
+      "tokens": [
+        "SEQUENCE",
+        "SEP",
+        "STATE",
+        "DURATION",
+        "SEP",
+        "TRAVEL",
+        "DURATION",
+        "SEP",
+        "ACTIVITY",
         "DURATION"
       ]
     },
