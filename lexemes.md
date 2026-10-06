@@ -8,6 +8,8 @@ node rule-parser/generate-lexemes.mjs
 
 The generator reads the **Rules**, **Dictionary** and **Examples** tables. Keep their columns as they are. Everything else in this file is for people.
 
+What the parser outputs (commands, timeline items, UI components) is defined in `contract.md`. The library comparison task is in `task.md`.
+
 ## Intent
 
 - **Outcome:** a library-neutral dictionary of lexemes for the rule DSL: token name, kind, lexemes or pattern, the rules that use it, and its meaning.
@@ -128,9 +130,12 @@ Not lexer concerns. They are recorded here so the parser and the timeline deriva
 
 - **Bare count:** `3x` with no timing is valid. Derivation places the occurrences (CDT order, auto-fit into gaps).
 - **Dependencies between repeated activities pair by occurrence:** with `3x before "PK sampling"` and 3 PK draws, the 1st Vital Signs goes before the 1st PK draw, the 2nd before the 2nd, and so on.
-- **Unequal counts pair up to the smaller count:** a single ECG `after "Vital Signs"` (3x) follows the 1st Vital Signs. The unpaired occurrences fall back to CDT order, and the derived trace marks them as unpaired.
+- **A dependency without a count inherits the count of its target:** `"12-lead ECG": after "Vital Signs"` with Vital Signs at 3x runs the ECG 3 times, one after each Vital Signs. A written count always wins.
+- **Unequal written counts pair up to the smaller count:** with `1x after "Vital Signs"` (3x), the ECG follows the 1st Vital Signs. The unpaired occurrences fall back to CDT order, and the derived trace marks them as unpaired.
+- **Placement:** an activity with no fixed time runs as early as possible after the previous fixed occurrence. Before the first fixed occurrence it packs right up against it, which is where the day starts. The full rule is in `contract.md`, Items.
+- **Post offsets count only the time in between:** the anchor's own duration and the subject's earlier post occurrences do not use up the offset. With IP Administration (1 min) and PK sampling (5 min), `post 1h 2h` puts the draws at IP end + 1h and at the 1st post draw's end + 1h, so the wait in each hour is exactly 1h - (Vital Signs + ECG).
 - **Derived waits are output, not input:** "an hour between each occurrence" and "1h - (ECG + Vital Signs)" come from derivation. They have no DSL form.
-- **Product scenario, expected timeline:** Vital Signs and 12-lead ECG run inside the 1h waits between PK draws, so each idle wait is 1h - (Vital Signs + ECG). The product text says "Vital signs and PK Sampling" here; that is a typo for ECG.
+- **Product scenario, expected timeline:** Vital Signs and 12-lead ECG run inside the 1h waits between PK draws, so each idle wait is 1h - (Vital Signs + ECG). The product text says "Vital signs and PK Sampling" here; that is a typo for ECG. Derivation shows the idle time as wait rows flagged `derived-wait`, so the result has the same shape as the legacy day.
 
 - **Sequence mode is literal:** slots run in written order from day start, each for its stated duration. The timeline is the running sum, with no derivation. Legacy days stay in sequence mode until a person or an AI converts them to rules with a separate tool; the parser never converts.
 - **Open (sequence mode):** several activities in one legacy slot, and legacy slot names. Today neither can be written; decide whether to drop them or add grouping (`"A", "B" 23m`) and names.
