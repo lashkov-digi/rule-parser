@@ -23,23 +23,29 @@ Source PRD: [FSD: Replace Intraday with SoA Rules](https://farohealth.atlassian.
 
 | Rule | Starts with | Description |
 | --- | --- | --- |
-| `dependency` | `AFTER`, `BEFORE` | The activity runs after or before all listed activities, on every day they occur together. No time gap implied. |
+| `subject` | `ACTIVITY` | Activity header `"Name":`. Every statement after it belongs to that activity, until the next header. |
+| `count` | `COUNT` | The activity runs N times a day, with no timing. Derivation places the occurrences. |
+| `dependency` | `AFTER`, `BEFORE`, `COUNT` | The activity runs after or before all listed activities, on every day they occur together. No time gap implied. An optional leading `COUNT` sets how many times it runs. |
 | `fasting-wait` | `STATE` | A fast or a wait of a set duration, before or after the activity. |
 | `spacing` | `COUNT` | The activity runs N times a day with a fixed gap between occurrences. |
 | `composite` | `COUNT`, `REL` | The activity runs at offsets (pre, post N) from an anchor, each offset with an optional collection window. |
 | `travel` | `TRAVEL` | Travel of a set duration that arrives before an anchor, with an optional return. |
 | `hospitalization` | `HOSP` | The subject is hospitalized for N hours a day, starting at day start or at an activity. |
 
-`spacing` and `composite` can both start with `COUNT`. The token after it decides: `QUALIFIER` means spacing, `REL` means composite.
+Four rules can start with `COUNT`. The token after it decides: `QUALIFIER` means spacing, `REL` means composite, `BEFORE` or `AFTER` means dependency, and `SEP` or end of input means count.
+
+`ACTIVITY` starts a statement only as a header, so it is always followed by `COLON`.
 
 ## Dictionary
 
 | Token | Kind | Lexemes | Pattern | Rules | Description |
 | --- | --- | --- | --- | --- | --- |
-| `COUNT` | literal | | `\d+x` | spacing, composite | Occurrences per day, e.g. `3x`. In composite it is optional, because the offsets define the count. |
+| `COUNT` | literal | | `\d+x` | count, dependency, spacing, composite | Occurrences per day, e.g. `3x`. Optional in dependency and composite; in composite the offsets define the count. |
 | `DURATION` | literal | | `\d+(\.\d+)?(min\|m\|h)` | fasting-wait, spacing, composite, travel, hospitalization | Time amount, e.g. `30m`, `90min`, `1.5h`. In hospitalization it is hours per day, from 1h to 24h; the parser checks the range, not the lexer. |
 | `PERCENT` | literal | | `\d+(\.\d+)?%` | composite | Window as a percentage of the offset, e.g. `10%`. |
-| `ACTIVITY` | string | | `"[^"]+"` | dependency, composite, travel, hospitalization | Activity name in double quotes, e.g. `"Chest X-ray"`. No escapes in the POC. |
+| `ACTIVITY` | string | | `"[^"]+"` | subject, dependency, composite, travel, hospitalization | Activity name in double quotes, e.g. `"Chest X-ray"`. No escapes in the POC. |
+| `COLON` | separator | `:` | | subject | Ends an activity header. |
+| `SEP` | separator | `;` | `\r?\n` | subject, count, dependency, fasting-wait, spacing, composite, travel, hospitalization | Ends a statement. Humans write newlines, machines write `;`. Repeated, leading and trailing separators are ignored, so blank lines are fine. |
 | `COMMA` | separator | `,` | | dependency, composite | List separator. |
 | `WINDOW` | operator | `±` / `+-` | | composite | Collection window for the offset right before it. Followed by `DURATION` or `PERCENT`. `+-` is the ASCII alias. |
 | `DAY_ANCHOR` | keyword | `day-start`, `day-end` | | composite, travel, hospitalization | Start of the day (arrival on site) or end of the day. `day-end` is valid only in composite. |
@@ -65,6 +71,10 @@ Source PRD: [FSD: Replace Intraday with SoA Rules](https://farohealth.atlassian.
 | --- | --- | --- |
 | dependency | `after "Vital Signs", "Chest X-ray"` | `AFTER ACTIVITY COMMA ACTIVITY` |
 | dependency | `before "PK sampling"` | `BEFORE ACTIVITY` |
+| dependency | `3x before "PK sampling"` | `COUNT BEFORE ACTIVITY` |
+| count | `3x` | `COUNT` |
+| subject | `"PK sampling": 3x rel "IP Administration" pre, post 1h 2h; "Vital Signs": 3x before "PK sampling"; "12-lead ECG": after "Vital Signs"` | `ACTIVITY COLON COUNT REL ACTIVITY PRE COMMA POST DURATION DURATION SEP ACTIVITY COLON COUNT BEFORE ACTIVITY SEP ACTIVITY COLON AFTER ACTIVITY` |
+| subject | `"PK sampling": fast 8h before; after "Vital Signs"; rel "IP Administration" pre, post 1h 2h 4h` | `ACTIVITY COLON STATE DURATION BEFORE SEP AFTER ACTIVITY SEP REL ACTIVITY PRE COMMA POST DURATION DURATION DURATION` |
 | fasting-wait | `fast 10h before` | `STATE DURATION BEFORE` |
 | fasting-wait | `wait 4h after` | `STATE DURATION AFTER` |
 | spacing | `3x exactly 6h` | `COUNT QUALIFIER DURATION` |
@@ -77,9 +87,30 @@ Source PRD: [FSD: Replace Intraday with SoA Rules](https://farohealth.atlassian.
 | hospitalization | `hosp 24h from day-start` | `HOSP DURATION FROM DAY_ANCHOR` |
 | hospitalization | `hosp 6h from "IP Administration"` | `HOSP DURATION FROM ACTIVITY` |
 
+The first `subject` example is the product scenario (IP Administration with no rules, PK sampling, Vital Signs, 12-lead ECG). Written by a human, it reads:
+
+```
+"PK sampling":
+  3x rel "IP Administration" pre, post 1h 2h
+"Vital Signs":
+  3x before "PK sampling"
+"12-lead ECG":
+  after "Vital Signs"
+```
+
+## Semantics decisions
+
+Not lexer concerns. They are recorded here so the parser and the timeline derivation follow the same rules.
+
+- **Bare count:** `3x` with no timing is valid. Derivation places the occurrences (CDT order, auto-fit into gaps).
+- **Dependencies between repeated activities pair by occurrence:** with `3x before "PK sampling"` and 3 PK draws, the 1st Vital Signs goes before the 1st PK draw, the 2nd before the 2nd, and so on.
+- **Unequal counts pair up to the smaller count:** a single ECG `after "Vital Signs"` (3x) follows the 1st Vital Signs. The unpaired occurrences fall back to CDT order, and the derived trace marks them as unpaired.
+- **Derived waits are output, not input:** "an hour between each occurrence" and "1h - (ECG + Vital Signs)" come from derivation. They have no DSL form.
+- **Product scenario, expected timeline:** Vital Signs and 12-lead ECG run inside the 1h waits between PK draws, so each idle wait is 1h - (Vital Signs + ECG). The product text says "Vital signs and PK Sampling" here; that is a typo for ECG.
+
 ## Lexer notes
 
-- **Whitespace** separates tokens and is skipped. It is not required around `,` and `±` (`pre,post` and `±6m` both lex).
+- **Spaces and tabs** separate tokens and are skipped. **Newlines are not whitespace:** they lex as `SEP`. Spaces are not required around `,`, `:`, `;` and `±` (`pre,post` and `±6m` both lex).
 - **Longest match wins.** `day-start` beats `start`, `>=` beats `=`, `90min` is one `DURATION`.
 - **No bare identifiers.** Activities are always quoted, so any unknown bare word is a lexer error.
 - **Keywords are lowercase** and case-sensitive.

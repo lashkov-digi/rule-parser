@@ -2,26 +2,27 @@
   "version": 1,
   "rules": [
     {
-      "name": "scenario",
+      "name": "subject",
       "startsWith": [
         "ACTIVITY"
       ],
-      "description": "A whole day on one line: blocks of `ACTIVITY : statement statement ...`, separated by `;`. An activity with no rules is left out."
+      "description": "Activity header `\"Name\":`. Every statement after it belongs to that activity, until the next header."
     },
     {
       "name": "count",
       "startsWith": [
         "COUNT"
       ],
-      "description": "The activity runs N times a day, with no timing. Other rules or the CDT order position it."
+      "description": "The activity runs N times a day, with no timing. Derivation places the occurrences."
     },
     {
       "name": "dependency",
       "startsWith": [
         "AFTER",
-        "BEFORE"
+        "BEFORE",
+        "COUNT"
       ],
-      "description": "The activity runs after or before all listed activities, on every day they occur together. No time gap implied."
+      "description": "The activity runs after or before all listed activities, on every day they occur together. No time gap implied. An optional leading `COUNT` sets how many times it runs."
     },
     {
       "name": "fasting-wait",
@@ -68,10 +69,11 @@
       "pattern": "\\d+x",
       "rules": [
         "count",
+        "dependency",
         "spacing",
         "composite"
       ],
-      "description": "Occurrences per day, e.g. `3x`. In composite it is optional, because the offsets define the count."
+      "description": "Occurrences per day, e.g. `3x`. Optional in dependency and composite; in composite the offsets define the count."
     },
     {
       "name": "DURATION",
@@ -103,7 +105,7 @@
       "lexemes": [],
       "pattern": "\"[^\"]+\"",
       "rules": [
-        "scenario",
+        "subject",
         "dependency",
         "composite",
         "travel",
@@ -122,12 +124,12 @@
       ],
       "pattern": null,
       "rules": [
-        "scenario"
+        "subject"
       ],
-      "description": "Ends the activity subject of a block."
+      "description": "Ends an activity header."
     },
     {
-      "name": "SEMICOLON",
+      "name": "SEP",
       "kind": "separator",
       "lexemes": [
         {
@@ -135,11 +137,18 @@
           "aliases": []
         }
       ],
-      "pattern": null,
+      "pattern": "\\r?\\n",
       "rules": [
-        "scenario"
+        "subject",
+        "count",
+        "dependency",
+        "fasting-wait",
+        "spacing",
+        "composite",
+        "travel",
+        "hospitalization"
       ],
-      "description": "Separates activity blocks."
+      "description": "Ends a statement. Humans write newlines, machines write `;`. Repeated, leading and trailing separators are ignored, so blank lines are fine."
     },
     {
       "name": "COMMA",
@@ -483,6 +492,72 @@
       ]
     },
     {
+      "rule": "dependency",
+      "text": "3x before \"PK sampling\"",
+      "tokens": [
+        "COUNT",
+        "BEFORE",
+        "ACTIVITY"
+      ]
+    },
+    {
+      "rule": "count",
+      "text": "3x",
+      "tokens": [
+        "COUNT"
+      ]
+    },
+    {
+      "rule": "subject",
+      "text": "\"PK sampling\": 3x rel \"IP Administration\" pre, post 1h 2h; \"Vital Signs\": 3x before \"PK sampling\"; \"12-lead ECG\": after \"Vital Signs\"",
+      "tokens": [
+        "ACTIVITY",
+        "COLON",
+        "COUNT",
+        "REL",
+        "ACTIVITY",
+        "PRE",
+        "COMMA",
+        "POST",
+        "DURATION",
+        "DURATION",
+        "SEP",
+        "ACTIVITY",
+        "COLON",
+        "COUNT",
+        "BEFORE",
+        "ACTIVITY",
+        "SEP",
+        "ACTIVITY",
+        "COLON",
+        "AFTER",
+        "ACTIVITY"
+      ]
+    },
+    {
+      "rule": "subject",
+      "text": "\"PK sampling\": fast 8h before; after \"Vital Signs\"; rel \"IP Administration\" pre, post 1h 2h 4h",
+      "tokens": [
+        "ACTIVITY",
+        "COLON",
+        "STATE",
+        "DURATION",
+        "BEFORE",
+        "SEP",
+        "AFTER",
+        "ACTIVITY",
+        "SEP",
+        "REL",
+        "ACTIVITY",
+        "PRE",
+        "COMMA",
+        "POST",
+        "DURATION",
+        "DURATION",
+        "DURATION"
+      ]
+    },
+    {
       "rule": "fasting-wait",
       "text": "fast 10h before",
       "tokens": [
@@ -604,40 +679,6 @@
         "HOSP",
         "DURATION",
         "FROM",
-        "ACTIVITY"
-      ]
-    },
-    {
-      "rule": "count",
-      "text": "3x",
-      "tokens": [
-        "COUNT"
-      ]
-    },
-    {
-      "rule": "scenario",
-      "text": "\"PK sampling\": 3x rel \"IP Administration\" pre, post 1h 2h; \"Vital Signs\": 3x before \"PK sampling\"; \"12-lead ECG\": after \"Vital Signs\"",
-      "tokens": [
-        "ACTIVITY",
-        "COLON",
-        "COUNT",
-        "REL",
-        "ACTIVITY",
-        "PRE",
-        "COMMA",
-        "POST",
-        "DURATION",
-        "DURATION",
-        "SEMICOLON",
-        "ACTIVITY",
-        "COLON",
-        "COUNT",
-        "BEFORE",
-        "ACTIVITY",
-        "SEMICOLON",
-        "ACTIVITY",
-        "COLON",
-        "AFTER",
         "ACTIVITY"
       ]
     }
