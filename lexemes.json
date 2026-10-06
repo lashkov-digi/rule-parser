@@ -1,0 +1,645 @@
+{
+  "version": 1,
+  "rules": [
+    {
+      "name": "scenario",
+      "startsWith": [
+        "ACTIVITY"
+      ],
+      "description": "A whole day on one line: blocks of `ACTIVITY : statement statement ...`, separated by `;`. An activity with no rules is left out."
+    },
+    {
+      "name": "count",
+      "startsWith": [
+        "COUNT"
+      ],
+      "description": "The activity runs N times a day, with no timing. Other rules or the CDT order position it."
+    },
+    {
+      "name": "dependency",
+      "startsWith": [
+        "AFTER",
+        "BEFORE"
+      ],
+      "description": "The activity runs after or before all listed activities, on every day they occur together. No time gap implied."
+    },
+    {
+      "name": "fasting-wait",
+      "startsWith": [
+        "STATE"
+      ],
+      "description": "A fast or a wait of a set duration, before or after the activity."
+    },
+    {
+      "name": "spacing",
+      "startsWith": [
+        "COUNT"
+      ],
+      "description": "The activity runs N times a day with a fixed gap between occurrences."
+    },
+    {
+      "name": "composite",
+      "startsWith": [
+        "COUNT",
+        "REL"
+      ],
+      "description": "The activity runs at offsets (pre, post N) from an anchor, each offset with an optional collection window."
+    },
+    {
+      "name": "travel",
+      "startsWith": [
+        "TRAVEL"
+      ],
+      "description": "Travel of a set duration that arrives before an anchor, with an optional return."
+    },
+    {
+      "name": "hospitalization",
+      "startsWith": [
+        "HOSP"
+      ],
+      "description": "The subject is hospitalized for N hours a day, starting at day start or at an activity."
+    }
+  ],
+  "tokens": [
+    {
+      "name": "COUNT",
+      "kind": "literal",
+      "lexemes": [],
+      "pattern": "\\d+x",
+      "rules": [
+        "count",
+        "spacing",
+        "composite"
+      ],
+      "description": "Occurrences per day, e.g. `3x`. In composite it is optional, because the offsets define the count."
+    },
+    {
+      "name": "DURATION",
+      "kind": "literal",
+      "lexemes": [],
+      "pattern": "\\d+(\\.\\d+)?(min|m|h)",
+      "rules": [
+        "fasting-wait",
+        "spacing",
+        "composite",
+        "travel",
+        "hospitalization"
+      ],
+      "description": "Time amount, e.g. `30m`, `90min`, `1.5h`. In hospitalization it is hours per day, from 1h to 24h; the parser checks the range, not the lexer."
+    },
+    {
+      "name": "PERCENT",
+      "kind": "literal",
+      "lexemes": [],
+      "pattern": "\\d+(\\.\\d+)?%",
+      "rules": [
+        "composite"
+      ],
+      "description": "Window as a percentage of the offset, e.g. `10%`."
+    },
+    {
+      "name": "ACTIVITY",
+      "kind": "string",
+      "lexemes": [],
+      "pattern": "\"[^\"]+\"",
+      "rules": [
+        "scenario",
+        "dependency",
+        "composite",
+        "travel",
+        "hospitalization"
+      ],
+      "description": "Activity name in double quotes, e.g. `\"Chest X-ray\"`. No escapes in the POC."
+    },
+    {
+      "name": "COLON",
+      "kind": "separator",
+      "lexemes": [
+        {
+          "value": ":",
+          "aliases": []
+        }
+      ],
+      "pattern": null,
+      "rules": [
+        "scenario"
+      ],
+      "description": "Ends the activity subject of a block."
+    },
+    {
+      "name": "SEMICOLON",
+      "kind": "separator",
+      "lexemes": [
+        {
+          "value": ";",
+          "aliases": []
+        }
+      ],
+      "pattern": null,
+      "rules": [
+        "scenario"
+      ],
+      "description": "Separates activity blocks."
+    },
+    {
+      "name": "COMMA",
+      "kind": "separator",
+      "lexemes": [
+        {
+          "value": ",",
+          "aliases": []
+        }
+      ],
+      "pattern": null,
+      "rules": [
+        "dependency",
+        "composite"
+      ],
+      "description": "List separator."
+    },
+    {
+      "name": "WINDOW",
+      "kind": "operator",
+      "lexemes": [
+        {
+          "value": "±",
+          "aliases": [
+            "+-"
+          ]
+        }
+      ],
+      "pattern": null,
+      "rules": [
+        "composite"
+      ],
+      "description": "Collection window for the offset right before it. Followed by `DURATION` or `PERCENT`. `+-` is the ASCII alias."
+    },
+    {
+      "name": "DAY_ANCHOR",
+      "kind": "keyword",
+      "lexemes": [
+        {
+          "value": "day-start",
+          "aliases": []
+        },
+        {
+          "value": "day-end",
+          "aliases": []
+        }
+      ],
+      "pattern": null,
+      "rules": [
+        "composite",
+        "travel",
+        "hospitalization"
+      ],
+      "description": "Start of the day (arrival on site) or end of the day. `day-end` is valid only in composite."
+    },
+    {
+      "name": "BEFORE",
+      "kind": "keyword",
+      "lexemes": [
+        {
+          "value": "before",
+          "aliases": []
+        }
+      ],
+      "pattern": null,
+      "rules": [
+        "dependency",
+        "fasting-wait",
+        "travel"
+      ],
+      "description": "Dependency: runs before. Fasting/wait: the slot comes before the activity. Travel: arrives before the anchor."
+    },
+    {
+      "name": "AFTER",
+      "kind": "keyword",
+      "lexemes": [
+        {
+          "value": "after",
+          "aliases": []
+        }
+      ],
+      "pattern": null,
+      "rules": [
+        "dependency",
+        "fasting-wait"
+      ],
+      "description": "Dependency: runs after. Fasting/wait: the slot comes after the activity."
+    },
+    {
+      "name": "STATE",
+      "kind": "keyword",
+      "lexemes": [
+        {
+          "value": "fast",
+          "aliases": []
+        },
+        {
+          "value": "wait",
+          "aliases": []
+        }
+      ],
+      "pattern": null,
+      "rules": [
+        "fasting-wait"
+      ],
+      "description": "Slot type. Starts a fasting or wait statement."
+    },
+    {
+      "name": "QUALIFIER",
+      "kind": "keyword",
+      "lexemes": [
+        {
+          "value": "exactly",
+          "aliases": [
+            "="
+          ]
+        },
+        {
+          "value": "approximately",
+          "aliases": [
+            "approx",
+            "~"
+          ]
+        },
+        {
+          "value": "atleast",
+          "aliases": [
+            ">="
+          ]
+        }
+      ],
+      "pattern": null,
+      "rules": [
+        "spacing"
+      ],
+      "description": "How strict the gap between occurrences is. Required."
+    },
+    {
+      "name": "REL",
+      "kind": "keyword",
+      "lexemes": [
+        {
+          "value": "rel",
+          "aliases": []
+        }
+      ],
+      "pattern": null,
+      "rules": [
+        "composite"
+      ],
+      "description": "\"Relative to\". Starts the anchor clause."
+    },
+    {
+      "name": "EDGE",
+      "kind": "keyword",
+      "lexemes": [
+        {
+          "value": "start",
+          "aliases": []
+        },
+        {
+          "value": "end",
+          "aliases": []
+        }
+      ],
+      "pattern": null,
+      "rules": [
+        "composite"
+      ],
+      "description": "Which end of the anchor activity the offsets are measured from. Optional, default `start`."
+    },
+    {
+      "name": "OCCURRENCE",
+      "kind": "keyword",
+      "lexemes": [
+        {
+          "value": "each",
+          "aliases": []
+        },
+        {
+          "value": "first",
+          "aliases": []
+        },
+        {
+          "value": "last",
+          "aliases": []
+        }
+      ],
+      "pattern": null,
+      "rules": [
+        "composite"
+      ],
+      "description": "Which occurrence of the anchor activity to use when it happens more than once that day. Optional, default `each`."
+    },
+    {
+      "name": "PRE",
+      "kind": "keyword",
+      "lexemes": [
+        {
+          "value": "pre",
+          "aliases": []
+        }
+      ],
+      "pattern": null,
+      "rules": [
+        "composite"
+      ],
+      "description": "An occurrence right before the anchor."
+    },
+    {
+      "name": "POST",
+      "kind": "keyword",
+      "lexemes": [
+        {
+          "value": "post",
+          "aliases": []
+        }
+      ],
+      "pattern": null,
+      "rules": [
+        "composite"
+      ],
+      "description": "Occurrences after the anchor. Followed by one or more `DURATION`, each with an optional `WINDOW`."
+    },
+    {
+      "name": "TRAVEL",
+      "kind": "keyword",
+      "lexemes": [
+        {
+          "value": "travel",
+          "aliases": []
+        }
+      ],
+      "pattern": null,
+      "rules": [
+        "travel"
+      ],
+      "description": "Starts a travel statement."
+    },
+    {
+      "name": "ADMISSION",
+      "kind": "keyword",
+      "lexemes": [
+        {
+          "value": "admission",
+          "aliases": []
+        }
+      ],
+      "pattern": null,
+      "rules": [
+        "travel"
+      ],
+      "description": "Hospital admission as the arrival anchor. Valid only on a day with hospitalization."
+    },
+    {
+      "name": "RETURN",
+      "kind": "keyword",
+      "lexemes": [
+        {
+          "value": "return",
+          "aliases": []
+        }
+      ],
+      "pattern": null,
+      "rules": [
+        "travel"
+      ],
+      "description": "Starts the optional return clause."
+    },
+    {
+      "name": "RETURN_MODE",
+      "kind": "keyword",
+      "lexemes": [
+        {
+          "value": "none",
+          "aliases": []
+        },
+        {
+          "value": "same",
+          "aliases": []
+        },
+        {
+          "value": "discharge",
+          "aliases": []
+        }
+      ],
+      "pattern": null,
+      "rules": [
+        "travel"
+      ],
+      "description": "`none`: no return travel. `same`: the same duration, after day end. `discharge`: after discharge. A `DURATION` in its place means a different return duration."
+    },
+    {
+      "name": "HOSP",
+      "kind": "keyword",
+      "lexemes": [
+        {
+          "value": "hosp",
+          "aliases": []
+        }
+      ],
+      "pattern": null,
+      "rules": [
+        "hospitalization"
+      ],
+      "description": "Starts a hospitalization statement."
+    },
+    {
+      "name": "FROM",
+      "kind": "keyword",
+      "lexemes": [
+        {
+          "value": "from",
+          "aliases": []
+        }
+      ],
+      "pattern": null,
+      "rules": [
+        "hospitalization"
+      ],
+      "description": "Start point of the hospitalization. Optional, default `day-start`."
+    }
+  ],
+  "examples": [
+    {
+      "rule": "dependency",
+      "text": "after \"Vital Signs\", \"Chest X-ray\"",
+      "tokens": [
+        "AFTER",
+        "ACTIVITY",
+        "COMMA",
+        "ACTIVITY"
+      ]
+    },
+    {
+      "rule": "dependency",
+      "text": "before \"PK sampling\"",
+      "tokens": [
+        "BEFORE",
+        "ACTIVITY"
+      ]
+    },
+    {
+      "rule": "fasting-wait",
+      "text": "fast 10h before",
+      "tokens": [
+        "STATE",
+        "DURATION",
+        "BEFORE"
+      ]
+    },
+    {
+      "rule": "fasting-wait",
+      "text": "wait 4h after",
+      "tokens": [
+        "STATE",
+        "DURATION",
+        "AFTER"
+      ]
+    },
+    {
+      "rule": "spacing",
+      "text": "3x exactly 6h",
+      "tokens": [
+        "COUNT",
+        "QUALIFIER",
+        "DURATION"
+      ]
+    },
+    {
+      "rule": "spacing",
+      "text": "2x >= 90min",
+      "tokens": [
+        "COUNT",
+        "QUALIFIER",
+        "DURATION"
+      ]
+    },
+    {
+      "rule": "composite",
+      "text": "4x rel \"IP Administration\" end first pre, post 1h ±6m 2h ±12m 4h ±24m",
+      "tokens": [
+        "COUNT",
+        "REL",
+        "ACTIVITY",
+        "EDGE",
+        "OCCURRENCE",
+        "PRE",
+        "COMMA",
+        "POST",
+        "DURATION",
+        "WINDOW",
+        "DURATION",
+        "DURATION",
+        "WINDOW",
+        "DURATION",
+        "DURATION",
+        "WINDOW",
+        "DURATION"
+      ]
+    },
+    {
+      "rule": "composite",
+      "text": "rel day-start post 2h +-10%",
+      "tokens": [
+        "REL",
+        "DAY_ANCHOR",
+        "POST",
+        "DURATION",
+        "WINDOW",
+        "PERCENT"
+      ]
+    },
+    {
+      "rule": "travel",
+      "text": "travel 30m before \"IP Administration\" return same",
+      "tokens": [
+        "TRAVEL",
+        "DURATION",
+        "BEFORE",
+        "ACTIVITY",
+        "RETURN",
+        "RETURN_MODE"
+      ]
+    },
+    {
+      "rule": "travel",
+      "text": "travel 45m before admission return discharge",
+      "tokens": [
+        "TRAVEL",
+        "DURATION",
+        "BEFORE",
+        "ADMISSION",
+        "RETURN",
+        "RETURN_MODE"
+      ]
+    },
+    {
+      "rule": "travel",
+      "text": "travel 30m return 1h",
+      "tokens": [
+        "TRAVEL",
+        "DURATION",
+        "RETURN",
+        "DURATION"
+      ]
+    },
+    {
+      "rule": "hospitalization",
+      "text": "hosp 24h from day-start",
+      "tokens": [
+        "HOSP",
+        "DURATION",
+        "FROM",
+        "DAY_ANCHOR"
+      ]
+    },
+    {
+      "rule": "hospitalization",
+      "text": "hosp 6h from \"IP Administration\"",
+      "tokens": [
+        "HOSP",
+        "DURATION",
+        "FROM",
+        "ACTIVITY"
+      ]
+    },
+    {
+      "rule": "count",
+      "text": "3x",
+      "tokens": [
+        "COUNT"
+      ]
+    },
+    {
+      "rule": "scenario",
+      "text": "\"PK sampling\": 3x rel \"IP Administration\" pre, post 1h 2h; \"Vital Signs\": 3x before \"PK sampling\"; \"12-lead ECG\": after \"Vital Signs\"",
+      "tokens": [
+        "ACTIVITY",
+        "COLON",
+        "COUNT",
+        "REL",
+        "ACTIVITY",
+        "PRE",
+        "COMMA",
+        "POST",
+        "DURATION",
+        "DURATION",
+        "SEMICOLON",
+        "ACTIVITY",
+        "COLON",
+        "COUNT",
+        "BEFORE",
+        "ACTIVITY",
+        "SEMICOLON",
+        "ACTIVITY",
+        "COLON",
+        "AFTER",
+        "ACTIVITY"
+      ]
+    }
+  ]
+}
