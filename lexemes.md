@@ -23,8 +23,6 @@ Source PRD: [FSD: Replace Intraday with SoA Rules](https://farohealth.atlassian.
 
 | Rule | Starts with | Description |
 | --- | --- | --- |
-| `scenario` | `ACTIVITY` | A whole day on one line: blocks of `ACTIVITY : statement statement ...`, separated by `;`. An activity with no rules is left out. |
-| `count` | `COUNT` | The activity runs N times a day, with no timing. Other rules or the CDT order position it. |
 | `dependency` | `AFTER`, `BEFORE` | The activity runs after or before all listed activities, on every day they occur together. No time gap implied. |
 | `fasting-wait` | `STATE` | A fast or a wait of a set duration, before or after the activity. |
 | `spacing` | `COUNT` | The activity runs N times a day with a fixed gap between occurrences. |
@@ -32,20 +30,16 @@ Source PRD: [FSD: Replace Intraday with SoA Rules](https://farohealth.atlassian.
 | `travel` | `TRAVEL` | Travel of a set duration that arrives before an anchor, with an optional return. |
 | `hospitalization` | `HOSP` | The subject is hospitalized for N hours a day, starting at day start or at an activity. |
 
-`count`, `spacing` and `composite` can all start with `COUNT`. The token after it decides: `QUALIFIER` means spacing, `REL` means composite, anything else means a bare count.
-
-Inside a scenario block, statements are separated by whitespace only. Each statement starts with a token from the **Starts with** column, so the parser knows where the next one begins.
+`spacing` and `composite` can both start with `COUNT`. The token after it decides: `QUALIFIER` means spacing, `REL` means composite.
 
 ## Dictionary
 
 | Token | Kind | Lexemes | Pattern | Rules | Description |
 | --- | --- | --- | --- | --- | --- |
-| `COUNT` | literal | | `\d+x` | count, spacing, composite | Occurrences per day, e.g. `3x`. In composite it is optional, because the offsets define the count. |
+| `COUNT` | literal | | `\d+x` | spacing, composite | Occurrences per day, e.g. `3x`. In composite it is optional, because the offsets define the count. |
 | `DURATION` | literal | | `\d+(\.\d+)?(min\|m\|h)` | fasting-wait, spacing, composite, travel, hospitalization | Time amount, e.g. `30m`, `90min`, `1.5h`. In hospitalization it is hours per day, from 1h to 24h; the parser checks the range, not the lexer. |
 | `PERCENT` | literal | | `\d+(\.\d+)?%` | composite | Window as a percentage of the offset, e.g. `10%`. |
-| `ACTIVITY` | string | | `"[^"]+"` | scenario, dependency, composite, travel, hospitalization | Activity name in double quotes, e.g. `"Chest X-ray"`. No escapes in the POC. |
-| `COLON` | separator | `:` | | scenario | Ends the activity subject of a block. |
-| `SEMICOLON` | separator | `;` | | scenario | Separates activity blocks. |
+| `ACTIVITY` | string | | `"[^"]+"` | dependency, composite, travel, hospitalization | Activity name in double quotes, e.g. `"Chest X-ray"`. No escapes in the POC. |
 | `COMMA` | separator | `,` | | dependency, composite | List separator. |
 | `WINDOW` | operator | `±` / `+-` | | composite | Collection window for the offset right before it. Followed by `DURATION` or `PERCENT`. `+-` is the ASCII alias. |
 | `DAY_ANCHOR` | keyword | `day-start`, `day-end` | | composite, travel, hospitalization | Start of the day (arrival on site) or end of the day. `day-end` is valid only in composite. |
@@ -82,8 +76,6 @@ Inside a scenario block, statements are separated by whitespace only. Each state
 | travel | `travel 30m return 1h` | `TRAVEL DURATION RETURN DURATION` |
 | hospitalization | `hosp 24h from day-start` | `HOSP DURATION FROM DAY_ANCHOR` |
 | hospitalization | `hosp 6h from "IP Administration"` | `HOSP DURATION FROM ACTIVITY` |
-| count | `3x` | `COUNT` |
-| scenario | `"PK sampling": 3x rel "IP Administration" pre, post 1h 2h; "Vital Signs": 3x before "PK sampling"; "12-lead ECG": after "Vital Signs"` | `ACTIVITY COLON COUNT REL ACTIVITY PRE COMMA POST DURATION DURATION SEMICOLON ACTIVITY COLON COUNT BEFORE ACTIVITY SEMICOLON ACTIVITY COLON AFTER ACTIVITY` |
 
 ## Lexer notes
 
