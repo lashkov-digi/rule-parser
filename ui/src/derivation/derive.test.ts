@@ -6,7 +6,7 @@ import { derive, type DayConfig, type ParseResult, type TimelineResult } from '.
 // fixtures/<name>.parse.json stands in for the parser; <name>.items.json is the timeline worked out by hand.
 const fixture = <T>(file: string): T => JSON.parse(readFileSync(new URL(`../../../fixtures/${file}`, import.meta.url), 'utf8')) as T;
 
-for (const name of ['product-scenario', 'legacy-day']) {
+for (const name of ['product-scenario', 'anchor-scenario', 'legacy-day']) {
   test(`${name}: derived timeline matches the expected items`, () => {
     const parse = fixture<ParseResult>(`${name}.parse.json`);
     const config = fixture<DayConfig>(`${name}.config.json`);

@@ -240,6 +240,221 @@
   },
   {
     "id": "s2",
+    "title": "Product scenario, anchor-first",
+    "text": "anchor \"IP Administration\":\n  \"PK sampling\" 3x pre, post 1h 2h\n  \"Vital Signs\" 3x before \"PK sampling\"\n  \"12-lead ECG\" after \"Vital Signs\"",
+    "tokens": [
+      {
+        "type": "ANCHOR",
+        "text": "anchor",
+        "from": 0,
+        "to": 6
+      },
+      {
+        "type": "ACTIVITY",
+        "text": "\"IP Administration\"",
+        "from": 7,
+        "to": 26
+      },
+      {
+        "type": "COLON",
+        "text": ":",
+        "from": 26,
+        "to": 27
+      },
+      {
+        "type": "SEP",
+        "text": "\n",
+        "from": 27,
+        "to": 28
+      },
+      {
+        "type": "ACTIVITY",
+        "text": "\"PK sampling\"",
+        "from": 30,
+        "to": 43
+      },
+      {
+        "type": "COUNT",
+        "text": "3x",
+        "from": 44,
+        "to": 46
+      },
+      {
+        "type": "PRE",
+        "text": "pre",
+        "from": 47,
+        "to": 50
+      },
+      {
+        "type": "COMMA",
+        "text": ",",
+        "from": 50,
+        "to": 51
+      },
+      {
+        "type": "POST",
+        "text": "post",
+        "from": 52,
+        "to": 56
+      },
+      {
+        "type": "DURATION",
+        "text": "1h",
+        "from": 57,
+        "to": 59
+      },
+      {
+        "type": "DURATION",
+        "text": "2h",
+        "from": 60,
+        "to": 62
+      },
+      {
+        "type": "SEP",
+        "text": "\n",
+        "from": 62,
+        "to": 63
+      },
+      {
+        "type": "ACTIVITY",
+        "text": "\"Vital Signs\"",
+        "from": 65,
+        "to": 78
+      },
+      {
+        "type": "COUNT",
+        "text": "3x",
+        "from": 79,
+        "to": 81
+      },
+      {
+        "type": "BEFORE",
+        "text": "before",
+        "from": 82,
+        "to": 88
+      },
+      {
+        "type": "ACTIVITY",
+        "text": "\"PK sampling\"",
+        "from": 89,
+        "to": 102
+      },
+      {
+        "type": "SEP",
+        "text": "\n",
+        "from": 102,
+        "to": 103
+      },
+      {
+        "type": "ACTIVITY",
+        "text": "\"12-lead ECG\"",
+        "from": 105,
+        "to": 118
+      },
+      {
+        "type": "AFTER",
+        "text": "after",
+        "from": 119,
+        "to": 124
+      },
+      {
+        "type": "ACTIVITY",
+        "text": "\"Vital Signs\"",
+        "from": 125,
+        "to": 138
+      }
+    ],
+    "parse": {
+      "version": 1,
+      "mode": "rules",
+      "commands": [
+        {
+          "id": "c1",
+          "type": "composite",
+          "subject": "PK sampling",
+          "count": 3,
+          "anchor": {
+            "kind": "activity",
+            "name": "IP Administration"
+          },
+          "edge": "start",
+          "occurrence": "each",
+          "offsets": [
+            {
+              "kind": "pre"
+            },
+            {
+              "kind": "post",
+              "after": 60,
+              "window": null
+            },
+            {
+              "kind": "post",
+              "after": 120,
+              "window": null
+            }
+          ],
+          "source": {
+            "from": 30,
+            "to": 62
+          }
+        },
+        {
+          "id": "c2",
+          "type": "dependency",
+          "subject": "Vital Signs",
+          "count": 3,
+          "direction": "before",
+          "targets": [
+            "PK sampling"
+          ],
+          "source": {
+            "from": 65,
+            "to": 102
+          }
+        },
+        {
+          "id": "c3",
+          "type": "dependency",
+          "subject": "12-lead ECG",
+          "count": null,
+          "direction": "after",
+          "targets": [
+            "Vital Signs"
+          ],
+          "source": {
+            "from": 105,
+            "to": 138
+          }
+        }
+      ],
+      "diagnostics": []
+    },
+    "config": {
+      "activities": {
+        "Vital Signs": {
+          "duration": 15
+        },
+        "12-lead ECG": {
+          "duration": 8
+        },
+        "PK sampling": {
+          "duration": 5
+        },
+        "IP Administration": {
+          "duration": 1
+        }
+      },
+      "cdtOrder": [
+        "Vital Signs",
+        "12-lead ECG",
+        "PK sampling",
+        "IP Administration"
+      ]
+    }
+  },
+  {
+    "id": "s3",
     "title": "Legacy day, full",
     "text": "sequence\n\"Vital Signs\" 15m\n\"12 Lead ECG\" 8m\n\"PK Sampling (Serum)\" 5m\n\"IP Administration - Oral\" 1m\n\"Vital Signs\" 15m\n\"12 Lead ECG\" 8m\nwait 40m\n\"PK Sampling (Serum)\" 5m\n\"Vital Signs\" 15m\n\"12 Lead ECG\" 8m\nwait 40m\n\"PK Sampling (Serum)\" 5m",
     "tokens": [

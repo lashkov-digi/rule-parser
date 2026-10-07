@@ -221,9 +221,10 @@ The UI is built by hand and is out of scope for the parser task. This section on
 | Input | Expected | Covers |
 | --- | --- | --- |
 | `fixtures/product-scenario.txt` | `product-scenario.parse.json`, `product-scenario.items.json` | Rules mode, headers, newline separators, composite with pre and post, dependency with and without count, derived waits. |
+| `fixtures/anchor-scenario.txt` | `anchor-scenario.parse.json`, `anchor-scenario.items.json` | The product scenario written anchor-first. Same commands and items as `product-scenario`; only the spans differ. |
 | `fixtures/legacy-day.txt` | `legacy-day.parse.json`, `legacy-day.items.json` | Sequence mode, and the items for a literal day. |
 | `fixtures/typo-error.txt` | `typo-error.parse.json` | A lexer error with its span and the expected tokens. |
-| `fixtures/scenarios.json` | the same file | The product scenario and the full legacy day: text, tokens, parse result and config. The UI reads it and runs `derive()`. |
+| `fixtures/scenarios.json` | the same file | The product scenario (subject-first and anchor-first) and the full legacy day: text, tokens, parse result and config. The UI reads it and runs `derive()`. |
 
 The `Examples` table in `lexemes.md` (and `examples` in `lexemes.json`) is the token-level fixture set for `tokenize`.
 

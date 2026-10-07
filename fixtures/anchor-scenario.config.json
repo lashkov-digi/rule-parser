@@ -1,0 +1,22 @@
+{
+  "activities": {
+    "Vital Signs": {
+      "duration": 15
+    },
+    "12-lead ECG": {
+      "duration": 8
+    },
+    "PK sampling": {
+      "duration": 5
+    },
+    "IP Administration": {
+      "duration": 1
+    }
+  },
+  "cdtOrder": [
+    "Vital Signs",
+    "12-lead ECG",
+    "PK sampling",
+    "IP Administration"
+  ]
+}

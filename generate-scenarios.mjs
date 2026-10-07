@@ -1,4 +1,4 @@
-// Generates fixtures/scenarios.json: the product scenario and the full legacy day, with the DSL text, its tokens,
+// Generates fixtures/scenarios.json: the product scenario (subject-first and anchor-first) and the full legacy day, with the DSL text, its tokens,
 // the parse result and the day config. The UI runs derivation on them; no timeline is written here.
 // Usage: node rule-parser/generate-scenarios.mjs (run generate-lexemes.mjs first)
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -46,6 +46,7 @@ const json = (file) => JSON.parse(read(file));
 // The parse results are handwritten stand-ins for the parser until a library is chosen.
 const scenarios = [
   { name: 'product-scenario', title: 'Product scenario' },
+  { name: 'anchor-scenario', title: 'Product scenario, anchor-first' },
   { name: 'legacy-day', title: 'Legacy day, full' },
 ].map(({ name, title }, i) => {
   const text = read(`${name}.txt`);
