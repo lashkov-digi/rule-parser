@@ -1,0 +1,286 @@
+{
+  "version": 1,
+  "anchorAt": 28,
+  "items": [
+    {
+      "id": "i1",
+      "kind": "activity",
+      "activities": [
+        "Vital Signs"
+      ],
+      "occurrence": {
+        "n": 1,
+        "of": 3
+      },
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 0
+      },
+      "duration": 15,
+      "gap": null,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [
+        "c2"
+      ],
+      "flags": []
+    },
+    {
+      "id": "i2",
+      "kind": "activity",
+      "activities": [
+        "12-lead ECG"
+      ],
+      "occurrence": {
+        "n": 1,
+        "of": 3
+      },
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 15
+      },
+      "duration": 8,
+      "gap": 0,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [
+        "c3"
+      ],
+      "flags": []
+    },
+    {
+      "id": "i3",
+      "kind": "activity",
+      "activities": [
+        "PK sampling"
+      ],
+      "occurrence": {
+        "n": 1,
+        "of": 3
+      },
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 23
+      },
+      "duration": 5,
+      "gap": 0,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [
+        "c1"
+      ],
+      "flags": []
+    },
+    {
+      "id": "i4",
+      "kind": "activity",
+      "activities": [
+        "IP Administration"
+      ],
+      "occurrence": null,
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 28
+      },
+      "duration": 1,
+      "gap": 0,
+      "isAnchor": true,
+      "window": null,
+      "commandIds": [
+        "c1"
+      ],
+      "flags": []
+    },
+    {
+      "id": "i5",
+      "kind": "activity",
+      "activities": [
+        "Vital Signs"
+      ],
+      "occurrence": {
+        "n": 2,
+        "of": 3
+      },
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 29
+      },
+      "duration": 15,
+      "gap": 0,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [
+        "c2"
+      ],
+      "flags": []
+    },
+    {
+      "id": "i6",
+      "kind": "activity",
+      "activities": [
+        "12-lead ECG"
+      ],
+      "occurrence": {
+        "n": 2,
+        "of": 3
+      },
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 44
+      },
+      "duration": 8,
+      "gap": 0,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [
+        "c3"
+      ],
+      "flags": []
+    },
+    {
+      "id": "i7",
+      "kind": "wait",
+      "activities": [],
+      "occurrence": null,
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 52
+      },
+      "duration": 37,
+      "gap": null,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [],
+      "flags": [
+        "derived-wait"
+      ]
+    },
+    {
+      "id": "i8",
+      "kind": "activity",
+      "activities": [
+        "PK sampling"
+      ],
+      "occurrence": {
+        "n": 2,
+        "of": 3
+      },
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 89
+      },
+      "duration": 5,
+      "gap": 0,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [
+        "c1"
+      ],
+      "flags": []
+    },
+    {
+      "id": "i9",
+      "kind": "activity",
+      "activities": [
+        "Vital Signs"
+      ],
+      "occurrence": {
+        "n": 3,
+        "of": 3
+      },
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 94
+      },
+      "duration": 15,
+      "gap": 0,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [
+        "c2"
+      ],
+      "flags": []
+    },
+    {
+      "id": "i10",
+      "kind": "activity",
+      "activities": [
+        "12-lead ECG"
+      ],
+      "occurrence": {
+        "n": 3,
+        "of": 3
+      },
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 109
+      },
+      "duration": 8,
+      "gap": 0,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [
+        "c3"
+      ],
+      "flags": []
+    },
+    {
+      "id": "i11",
+      "kind": "wait",
+      "activities": [],
+      "occurrence": null,
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 117
+      },
+      "duration": 37,
+      "gap": null,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [],
+      "flags": [
+        "derived-wait"
+      ]
+    },
+    {
+      "id": "i12",
+      "kind": "activity",
+      "activities": [
+        "PK sampling"
+      ],
+      "occurrence": {
+        "n": 3,
+        "of": 3
+      },
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 154
+      },
+      "duration": 5,
+      "gap": 0,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [
+        "c1"
+      ],
+      "flags": []
+    }
+  ],
+  "summary": {
+    "onSite": 159,
+    "withTravel": 159
+  },
+  "diagnostics": []
+}

@@ -1,0 +1,286 @@
+{
+  "version": 1,
+  "anchorAt": null,
+  "items": [
+    {
+      "id": "i1",
+      "kind": "activity",
+      "activities": [
+        "Vital Signs"
+      ],
+      "occurrence": {
+        "n": 1,
+        "of": 3
+      },
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 0
+      },
+      "duration": 15,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [
+        "c1"
+      ],
+      "flags": [],
+      "gap": null
+    },
+    {
+      "id": "i2",
+      "kind": "activity",
+      "activities": [
+        "12 Lead ECG"
+      ],
+      "occurrence": {
+        "n": 1,
+        "of": 3
+      },
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 15
+      },
+      "duration": 8,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [
+        "c2"
+      ],
+      "flags": [],
+      "gap": 0
+    },
+    {
+      "id": "i3",
+      "kind": "activity",
+      "activities": [
+        "PK Sampling (Serum)"
+      ],
+      "occurrence": {
+        "n": 1,
+        "of": 3
+      },
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 23
+      },
+      "duration": 5,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [
+        "c3"
+      ],
+      "flags": [],
+      "gap": 0
+    },
+    {
+      "id": "i4",
+      "kind": "activity",
+      "activities": [
+        "IP Administration - Oral"
+      ],
+      "occurrence": null,
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 28
+      },
+      "duration": 1,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [
+        "c4"
+      ],
+      "flags": [],
+      "gap": 0
+    },
+    {
+      "id": "i5",
+      "kind": "activity",
+      "activities": [
+        "Vital Signs"
+      ],
+      "occurrence": {
+        "n": 2,
+        "of": 3
+      },
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 29
+      },
+      "duration": 15,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [
+        "c5"
+      ],
+      "flags": [],
+      "gap": 0
+    },
+    {
+      "id": "i6",
+      "kind": "activity",
+      "activities": [
+        "12 Lead ECG"
+      ],
+      "occurrence": {
+        "n": 2,
+        "of": 3
+      },
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 44
+      },
+      "duration": 8,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [
+        "c6"
+      ],
+      "flags": [],
+      "gap": 0
+    },
+    {
+      "id": "i7",
+      "kind": "wait",
+      "activities": [],
+      "occurrence": null,
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 52
+      },
+      "duration": 40,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [
+        "c7"
+      ],
+      "flags": [],
+      "gap": null
+    },
+    {
+      "id": "i8",
+      "kind": "activity",
+      "activities": [
+        "PK Sampling (Serum)"
+      ],
+      "occurrence": {
+        "n": 2,
+        "of": 3
+      },
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 92
+      },
+      "duration": 5,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [
+        "c8"
+      ],
+      "flags": [],
+      "gap": 0
+    },
+    {
+      "id": "i9",
+      "kind": "activity",
+      "activities": [
+        "Vital Signs"
+      ],
+      "occurrence": {
+        "n": 3,
+        "of": 3
+      },
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 97
+      },
+      "duration": 15,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [
+        "c9"
+      ],
+      "flags": [],
+      "gap": 0
+    },
+    {
+      "id": "i10",
+      "kind": "activity",
+      "activities": [
+        "12 Lead ECG"
+      ],
+      "occurrence": {
+        "n": 3,
+        "of": 3
+      },
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 112
+      },
+      "duration": 8,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [
+        "c10"
+      ],
+      "flags": [],
+      "gap": 0
+    },
+    {
+      "id": "i11",
+      "kind": "wait",
+      "activities": [],
+      "occurrence": null,
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 120
+      },
+      "duration": 40,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [
+        "c11"
+      ],
+      "flags": [],
+      "gap": null
+    },
+    {
+      "id": "i12",
+      "kind": "activity",
+      "activities": [
+        "PK Sampling (Serum)"
+      ],
+      "occurrence": {
+        "n": 3,
+        "of": 3
+      },
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 160
+      },
+      "duration": 5,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [
+        "c12"
+      ],
+      "flags": [],
+      "gap": 0
+    }
+  ],
+  "summary": {
+    "onSite": 165,
+    "withTravel": 165
+  },
+  "diagnostics": []
+}

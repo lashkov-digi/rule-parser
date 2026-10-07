@@ -1,0 +1,6 @@
+"PK sampling":
+  3x rel "IP Administration" pre, post 1h 2h
+"Vital Signs":
+  3x before "PK sampling"
+"12-lead ECG":
+  after "Vital Signs"

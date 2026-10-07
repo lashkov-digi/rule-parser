@@ -1,0 +1,13 @@
+sequence
+"Vital Signs" 15m
+"12 Lead ECG" 8m
+"PK Sampling (Serum)" 5m
+"IP Administration - Oral" 1m
+"Vital Signs" 15m
+"12 Lead ECG" 8m
+wait 40m
+"PK Sampling (Serum)" 5m
+"Vital Signs" 15m
+"12 Lead ECG" 8m
+wait 40m
+"PK Sampling (Serum)" 5m

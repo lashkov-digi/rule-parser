@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "mode": "rules",
+  "commands": [
+    {
+      "id": "c1",
+      "type": "composite",
+      "subject": "PK sampling",
+      "count": 3,
+      "anchor": {
+        "kind": "activity",
+        "name": "IP Administration"
+      },
+      "edge": "start",
+      "occurrence": "each",
+      "offsets": [
+        {
+          "kind": "pre"
+        },
+        {
+          "kind": "post",
+          "after": 60,
+          "window": null
+        },
+        {
+          "kind": "post",
+          "after": 120,
+          "window": null
+        }
+      ],
+      "source": {
+        "from": 17,
+        "to": 59
+      }
+    },
+    {
+      "id": "c2",
+      "type": "dependency",
+      "subject": "Vital Signs",
+      "count": 3,
+      "direction": "before",
+      "targets": [
+        "PK sampling"
+      ],
+      "source": {
+        "from": 77,
+        "to": 100
+      }
+    },
+    {
+      "id": "c3",
+      "type": "dependency",
+      "subject": "12-lead ECG",
+      "count": null,
+      "direction": "after",
+      "targets": [
+        "Vital Signs"
+      ],
+      "source": {
+        "from": 118,
+        "to": 137
+      }
+    }
+  ],
+  "diagnostics": []
+}

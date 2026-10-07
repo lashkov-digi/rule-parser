@@ -1,0 +1,139 @@
+{
+  "version": 1,
+  "mode": "sequence",
+  "commands": [
+    {
+      "id": "c1",
+      "type": "slot",
+      "kind": "activity",
+      "activity": "Vital Signs",
+      "duration": 15,
+      "source": {
+        "from": 9,
+        "to": 26
+      }
+    },
+    {
+      "id": "c2",
+      "type": "slot",
+      "kind": "activity",
+      "activity": "12 Lead ECG",
+      "duration": 8,
+      "source": {
+        "from": 27,
+        "to": 43
+      }
+    },
+    {
+      "id": "c3",
+      "type": "slot",
+      "kind": "activity",
+      "activity": "PK Sampling (Serum)",
+      "duration": 5,
+      "source": {
+        "from": 44,
+        "to": 68
+      }
+    },
+    {
+      "id": "c4",
+      "type": "slot",
+      "kind": "activity",
+      "activity": "IP Administration - Oral",
+      "duration": 1,
+      "source": {
+        "from": 69,
+        "to": 98
+      }
+    },
+    {
+      "id": "c5",
+      "type": "slot",
+      "kind": "activity",
+      "activity": "Vital Signs",
+      "duration": 15,
+      "source": {
+        "from": 99,
+        "to": 116
+      }
+    },
+    {
+      "id": "c6",
+      "type": "slot",
+      "kind": "activity",
+      "activity": "12 Lead ECG",
+      "duration": 8,
+      "source": {
+        "from": 117,
+        "to": 133
+      }
+    },
+    {
+      "id": "c7",
+      "type": "slot",
+      "kind": "wait",
+      "activity": null,
+      "duration": 40,
+      "source": {
+        "from": 134,
+        "to": 142
+      }
+    },
+    {
+      "id": "c8",
+      "type": "slot",
+      "kind": "activity",
+      "activity": "PK Sampling (Serum)",
+      "duration": 5,
+      "source": {
+        "from": 143,
+        "to": 167
+      }
+    },
+    {
+      "id": "c9",
+      "type": "slot",
+      "kind": "activity",
+      "activity": "Vital Signs",
+      "duration": 15,
+      "source": {
+        "from": 168,
+        "to": 185
+      }
+    },
+    {
+      "id": "c10",
+      "type": "slot",
+      "kind": "activity",
+      "activity": "12 Lead ECG",
+      "duration": 8,
+      "source": {
+        "from": 186,
+        "to": 202
+      }
+    },
+    {
+      "id": "c11",
+      "type": "slot",
+      "kind": "wait",
+      "activity": null,
+      "duration": 40,
+      "source": {
+        "from": 203,
+        "to": 211
+      }
+    },
+    {
+      "id": "c12",
+      "type": "slot",
+      "kind": "activity",
+      "activity": "PK Sampling (Serum)",
+      "duration": 5,
+      "source": {
+        "from": 212,
+        "to": 236
+      }
+    }
+  ],
+  "diagnostics": []
+}

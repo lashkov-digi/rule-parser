@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "mode": "rules",
+  "commands": [],
+  "diagnostics": [
+    {
+      "severity": "error",
+      "code": "lex",
+      "message": "Unknown word \"befor\"",
+      "from": 18,
+      "to": 23,
+      "expected": [
+        "QUALIFIER",
+        "REL",
+        "BEFORE",
+        "AFTER",
+        "SEP"
+      ]
+    }
+  ]
+}
