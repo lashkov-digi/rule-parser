@@ -1,0 +1,613 @@
+[
+  {
+    "id": "s1",
+    "title": "Product scenario",
+    "text": "\"PK sampling\":\n  3x rel \"IP Administration\" pre, post 1h 2h\n\"Vital Signs\":\n  3x before \"PK sampling\"\n\"12-lead ECG\":\n  after \"Vital Signs\"",
+    "tokens": [
+      {
+        "type": "ACTIVITY",
+        "text": "\"PK sampling\"",
+        "from": 0,
+        "to": 13
+      },
+      {
+        "type": "COLON",
+        "text": ":",
+        "from": 13,
+        "to": 14
+      },
+      {
+        "type": "SEP",
+        "text": "\n",
+        "from": 14,
+        "to": 15
+      },
+      {
+        "type": "COUNT",
+        "text": "3x",
+        "from": 17,
+        "to": 19
+      },
+      {
+        "type": "REL",
+        "text": "rel",
+        "from": 20,
+        "to": 23
+      },
+      {
+        "type": "ACTIVITY",
+        "text": "\"IP Administration\"",
+        "from": 24,
+        "to": 43
+      },
+      {
+        "type": "PRE",
+        "text": "pre",
+        "from": 44,
+        "to": 47
+      },
+      {
+        "type": "COMMA",
+        "text": ",",
+        "from": 47,
+        "to": 48
+      },
+      {
+        "type": "POST",
+        "text": "post",
+        "from": 49,
+        "to": 53
+      },
+      {
+        "type": "DURATION",
+        "text": "1h",
+        "from": 54,
+        "to": 56
+      },
+      {
+        "type": "DURATION",
+        "text": "2h",
+        "from": 57,
+        "to": 59
+      },
+      {
+        "type": "SEP",
+        "text": "\n",
+        "from": 59,
+        "to": 60
+      },
+      {
+        "type": "ACTIVITY",
+        "text": "\"Vital Signs\"",
+        "from": 60,
+        "to": 73
+      },
+      {
+        "type": "COLON",
+        "text": ":",
+        "from": 73,
+        "to": 74
+      },
+      {
+        "type": "SEP",
+        "text": "\n",
+        "from": 74,
+        "to": 75
+      },
+      {
+        "type": "COUNT",
+        "text": "3x",
+        "from": 77,
+        "to": 79
+      },
+      {
+        "type": "BEFORE",
+        "text": "before",
+        "from": 80,
+        "to": 86
+      },
+      {
+        "type": "ACTIVITY",
+        "text": "\"PK sampling\"",
+        "from": 87,
+        "to": 100
+      },
+      {
+        "type": "SEP",
+        "text": "\n",
+        "from": 100,
+        "to": 101
+      },
+      {
+        "type": "ACTIVITY",
+        "text": "\"12-lead ECG\"",
+        "from": 101,
+        "to": 114
+      },
+      {
+        "type": "COLON",
+        "text": ":",
+        "from": 114,
+        "to": 115
+      },
+      {
+        "type": "SEP",
+        "text": "\n",
+        "from": 115,
+        "to": 116
+      },
+      {
+        "type": "AFTER",
+        "text": "after",
+        "from": 118,
+        "to": 123
+      },
+      {
+        "type": "ACTIVITY",
+        "text": "\"Vital Signs\"",
+        "from": 124,
+        "to": 137
+      }
+    ],
+    "parse": {
+      "version": 1,
+      "mode": "rules",
+      "commands": [
+        {
+          "id": "c1",
+          "type": "composite",
+          "subject": "PK sampling",
+          "count": 3,
+          "anchor": {
+            "kind": "activity",
+            "name": "IP Administration"
+          },
+          "edge": "start",
+          "occurrence": "each",
+          "offsets": [
+            {
+              "kind": "pre"
+            },
+            {
+              "kind": "post",
+              "after": 60,
+              "window": null
+            },
+            {
+              "kind": "post",
+              "after": 120,
+              "window": null
+            }
+          ],
+          "source": {
+            "from": 17,
+            "to": 59
+          }
+        },
+        {
+          "id": "c2",
+          "type": "dependency",
+          "subject": "Vital Signs",
+          "count": 3,
+          "direction": "before",
+          "targets": [
+            "PK sampling"
+          ],
+          "source": {
+            "from": 77,
+            "to": 100
+          }
+        },
+        {
+          "id": "c3",
+          "type": "dependency",
+          "subject": "12-lead ECG",
+          "count": null,
+          "direction": "after",
+          "targets": [
+            "Vital Signs"
+          ],
+          "source": {
+            "from": 118,
+            "to": 137
+          }
+        }
+      ],
+      "diagnostics": []
+    },
+    "config": {
+      "activities": {
+        "Vital Signs": {
+          "duration": 15
+        },
+        "12-lead ECG": {
+          "duration": 8
+        },
+        "PK sampling": {
+          "duration": 5
+        },
+        "IP Administration": {
+          "duration": 1
+        }
+      },
+      "cdtOrder": [
+        "Vital Signs",
+        "12-lead ECG",
+        "PK sampling",
+        "IP Administration"
+      ]
+    }
+  },
+  {
+    "id": "s2",
+    "title": "Legacy day, full",
+    "text": "sequence\n\"Vital Signs\" 15m\n\"12 Lead ECG\" 8m\n\"PK Sampling (Serum)\" 5m\n\"IP Administration - Oral\" 1m\n\"Vital Signs\" 15m\n\"12 Lead ECG\" 8m\nwait 40m\n\"PK Sampling (Serum)\" 5m\n\"Vital Signs\" 15m\n\"12 Lead ECG\" 8m\nwait 40m\n\"PK Sampling (Serum)\" 5m",
+    "tokens": [
+      {
+        "type": "SEQUENCE",
+        "text": "sequence",
+        "from": 0,
+        "to": 8
+      },
+      {
+        "type": "SEP",
+        "text": "\n",
+        "from": 8,
+        "to": 9
+      },
+      {
+        "type": "ACTIVITY",
+        "text": "\"Vital Signs\"",
+        "from": 9,
+        "to": 22
+      },
+      {
+        "type": "DURATION",
+        "text": "15m",
+        "from": 23,
+        "to": 26
+      },
+      {
+        "type": "SEP",
+        "text": "\n",
+        "from": 26,
+        "to": 27
+      },
+      {
+        "type": "ACTIVITY",
+        "text": "\"12 Lead ECG\"",
+        "from": 27,
+        "to": 40
+      },
+      {
+        "type": "DURATION",
+        "text": "8m",
+        "from": 41,
+        "to": 43
+      },
+      {
+        "type": "SEP",
+        "text": "\n",
+        "from": 43,
+        "to": 44
+      },
+      {
+        "type": "ACTIVITY",
+        "text": "\"PK Sampling (Serum)\"",
+        "from": 44,
+        "to": 65
+      },
+      {
+        "type": "DURATION",
+        "text": "5m",
+        "from": 66,
+        "to": 68
+      },
+      {
+        "type": "SEP",
+        "text": "\n",
+        "from": 68,
+        "to": 69
+      },
+      {
+        "type": "ACTIVITY",
+        "text": "\"IP Administration - Oral\"",
+        "from": 69,
+        "to": 95
+      },
+      {
+        "type": "DURATION",
+        "text": "1m",
+        "from": 96,
+        "to": 98
+      },
+      {
+        "type": "SEP",
+        "text": "\n",
+        "from": 98,
+        "to": 99
+      },
+      {
+        "type": "ACTIVITY",
+        "text": "\"Vital Signs\"",
+        "from": 99,
+        "to": 112
+      },
+      {
+        "type": "DURATION",
+        "text": "15m",
+        "from": 113,
+        "to": 116
+      },
+      {
+        "type": "SEP",
+        "text": "\n",
+        "from": 116,
+        "to": 117
+      },
+      {
+        "type": "ACTIVITY",
+        "text": "\"12 Lead ECG\"",
+        "from": 117,
+        "to": 130
+      },
+      {
+        "type": "DURATION",
+        "text": "8m",
+        "from": 131,
+        "to": 133
+      },
+      {
+        "type": "SEP",
+        "text": "\n",
+        "from": 133,
+        "to": 134
+      },
+      {
+        "type": "STATE",
+        "text": "wait",
+        "from": 134,
+        "to": 138
+      },
+      {
+        "type": "DURATION",
+        "text": "40m",
+        "from": 139,
+        "to": 142
+      },
+      {
+        "type": "SEP",
+        "text": "\n",
+        "from": 142,
+        "to": 143
+      },
+      {
+        "type": "ACTIVITY",
+        "text": "\"PK Sampling (Serum)\"",
+        "from": 143,
+        "to": 164
+      },
+      {
+        "type": "DURATION",
+        "text": "5m",
+        "from": 165,
+        "to": 167
+      },
+      {
+        "type": "SEP",
+        "text": "\n",
+        "from": 167,
+        "to": 168
+      },
+      {
+        "type": "ACTIVITY",
+        "text": "\"Vital Signs\"",
+        "from": 168,
+        "to": 181
+      },
+      {
+        "type": "DURATION",
+        "text": "15m",
+        "from": 182,
+        "to": 185
+      },
+      {
+        "type": "SEP",
+        "text": "\n",
+        "from": 185,
+        "to": 186
+      },
+      {
+        "type": "ACTIVITY",
+        "text": "\"12 Lead ECG\"",
+        "from": 186,
+        "to": 199
+      },
+      {
+        "type": "DURATION",
+        "text": "8m",
+        "from": 200,
+        "to": 202
+      },
+      {
+        "type": "SEP",
+        "text": "\n",
+        "from": 202,
+        "to": 203
+      },
+      {
+        "type": "STATE",
+        "text": "wait",
+        "from": 203,
+        "to": 207
+      },
+      {
+        "type": "DURATION",
+        "text": "40m",
+        "from": 208,
+        "to": 211
+      },
+      {
+        "type": "SEP",
+        "text": "\n",
+        "from": 211,
+        "to": 212
+      },
+      {
+        "type": "ACTIVITY",
+        "text": "\"PK Sampling (Serum)\"",
+        "from": 212,
+        "to": 233
+      },
+      {
+        "type": "DURATION",
+        "text": "5m",
+        "from": 234,
+        "to": 236
+      }
+    ],
+    "parse": {
+      "version": 1,
+      "mode": "sequence",
+      "commands": [
+        {
+          "id": "c1",
+          "type": "slot",
+          "kind": "activity",
+          "activity": "Vital Signs",
+          "duration": 15,
+          "source": {
+            "from": 9,
+            "to": 26
+          }
+        },
+        {
+          "id": "c2",
+          "type": "slot",
+          "kind": "activity",
+          "activity": "12 Lead ECG",
+          "duration": 8,
+          "source": {
+            "from": 27,
+            "to": 43
+          }
+        },
+        {
+          "id": "c3",
+          "type": "slot",
+          "kind": "activity",
+          "activity": "PK Sampling (Serum)",
+          "duration": 5,
+          "source": {
+            "from": 44,
+            "to": 68
+          }
+        },
+        {
+          "id": "c4",
+          "type": "slot",
+          "kind": "activity",
+          "activity": "IP Administration - Oral",
+          "duration": 1,
+          "source": {
+            "from": 69,
+            "to": 98
+          }
+        },
+        {
+          "id": "c5",
+          "type": "slot",
+          "kind": "activity",
+          "activity": "Vital Signs",
+          "duration": 15,
+          "source": {
+            "from": 99,
+            "to": 116
+          }
+        },
+        {
+          "id": "c6",
+          "type": "slot",
+          "kind": "activity",
+          "activity": "12 Lead ECG",
+          "duration": 8,
+          "source": {
+            "from": 117,
+            "to": 133
+          }
+        },
+        {
+          "id": "c7",
+          "type": "slot",
+          "kind": "wait",
+          "activity": null,
+          "duration": 40,
+          "source": {
+            "from": 134,
+            "to": 142
+          }
+        },
+        {
+          "id": "c8",
+          "type": "slot",
+          "kind": "activity",
+          "activity": "PK Sampling (Serum)",
+          "duration": 5,
+          "source": {
+            "from": 143,
+            "to": 167
+          }
+        },
+        {
+          "id": "c9",
+          "type": "slot",
+          "kind": "activity",
+          "activity": "Vital Signs",
+          "duration": 15,
+          "source": {
+            "from": 168,
+            "to": 185
+          }
+        },
+        {
+          "id": "c10",
+          "type": "slot",
+          "kind": "activity",
+          "activity": "12 Lead ECG",
+          "duration": 8,
+          "source": {
+            "from": 186,
+            "to": 202
+          }
+        },
+        {
+          "id": "c11",
+          "type": "slot",
+          "kind": "wait",
+          "activity": null,
+          "duration": 40,
+          "source": {
+            "from": 203,
+            "to": 211
+          }
+        },
+        {
+          "id": "c12",
+          "type": "slot",
+          "kind": "activity",
+          "activity": "PK Sampling (Serum)",
+          "duration": 5,
+          "source": {
+            "from": 212,
+            "to": 236
+          }
+        }
+      ],
+      "diagnostics": []
+    },
+    "config": {
+      "activities": {},
+      "cdtOrder": []
+    }
+  }
+]
