@@ -1,0 +1,482 @@
+:root {
+  --text: #1d1d1f;
+  --secondary: #515154;
+  --muted: #86868b;
+  --line: rgb(0 0 0 / 0.08);
+  --accent: #0071e3;
+  --accent-soft: #e8f1fd;
+  --surface: #fff;
+  --surface-sunken: #f5f5f7;
+  --fast: #8e5cf6;
+  --travel: #0f8f8f;
+  --wait: #a1a1a6;
+  --hospitalization: #e08a2b;
+
+  /* Critically damped feel: fast start, no overshoot. Durations stay short so nothing waits on motion. */
+  --ease: cubic-bezier(0.25, 1, 0.5, 1);
+  --fast-in: 160ms;
+  --fade-out: 120ms;
+  --bar-height: 3.5rem;
+
+  font: 100%/1.5 -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', sans-serif;
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--surface);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+/* Layout: a translucent bar floats over two panels that scroll on their own, underneath it. */
+
+.app {
+  position: relative;
+  height: 100vh;
+}
+
+.topbar {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 10;
+  height: var(--bar-height);
+  display: flex;
+  align-items: center;
+  padding: 0 1.5rem;
+  background: rgb(255 255 255 / 0.72);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: 0 1px 0 var(--line);
+}
+
+.panels {
+  height: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  transition: opacity var(--fast-in) var(--ease);
+}
+
+.panels.is-switching {
+  opacity: 0;
+  transition-duration: var(--fade-out);
+}
+
+.panel {
+  overflow-y: auto;
+  padding: calc(var(--bar-height) + 1.25rem) 1.75rem 2.5rem;
+}
+
+/* The developer side is the structural, heavier layer; the product side stays light. */
+.panel-dev {
+  background: var(--surface-sunken);
+  box-shadow: inset 1px 0 0 var(--line);
+}
+
+h2 {
+  margin: 1.75rem 0 0.625rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* The first heading in each panel sits right under the bar. */
+.panel > section:first-child h2 {
+  margin-top: 0;
+}
+
+@media (max-width: 900px) {
+  .app {
+    height: auto;
+  }
+
+  .topbar {
+    position: sticky;
+    top: 0;
+  }
+
+  .panels {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .panel {
+    overflow-y: visible;
+    padding-top: 1.25rem;
+  }
+
+  .panel-dev {
+    box-shadow: inset 0 1px 0 var(--line);
+  }
+}
+
+/* Scenario picker */
+
+.picker {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--secondary);
+}
+
+.picker select {
+  appearance: none;
+  font: inherit;
+  font-weight: 500;
+  color: var(--text);
+  min-width: 16rem;
+  padding: 0.4375rem 2.25rem 0.4375rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none' stroke='%2386868b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 1l4 4 4-4'/%3E%3C/svg%3E")
+      no-repeat right 0.75rem center,
+    var(--surface);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
+  cursor: pointer;
+  transition:
+    border-color var(--fast-in) var(--ease),
+    box-shadow var(--fast-in) var(--ease),
+    transform 100ms ease-out;
+}
+
+.picker select:hover {
+  border-color: rgb(0 0 0 / 0.16);
+}
+
+.picker select:active {
+  transform: scale(0.98);
+}
+
+.picker select:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgb(0 113 227 / 0.18);
+}
+
+/* Developer view: text, tokens, JSON */
+
+.code {
+  margin: 0;
+  padding: 0.875rem 1rem;
+  background: var(--surface);
+  border-radius: 0.625rem;
+  box-shadow:
+    0 0 0 1px var(--line),
+    0 1px 2px rgb(0 0 0 / 0.04);
+  font: 0.8125rem/1.6 ui-monospace, 'SF Mono', Menlo, monospace;
+  overflow-x: auto;
+}
+
+/* Plain text until its token is hovered, then the lexeme lights up. */
+.lexeme {
+  border-radius: 0.1875rem;
+  cursor: default;
+  transition:
+    background-color var(--fast-in) var(--ease),
+    box-shadow var(--fast-in) var(--ease);
+}
+
+.lexeme.active {
+  background: var(--kind-soft);
+  box-shadow: inset 0 -2px 0 var(--kind);
+}
+
+.tokens {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.token {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+  padding: 0.3125rem 0.5625rem;
+  border-radius: 0.5rem;
+  background: var(--surface);
+  box-shadow:
+    inset 3px 0 0 var(--kind),
+    0 0 0 1px var(--line),
+    0 1px 2px rgb(0 0 0 / 0.04);
+  cursor: default;
+  user-select: none;
+  animation: appear 220ms var(--ease) both;
+  animation-delay: min(calc(var(--i) * 8ms), 0.3s);
+  transition:
+    transform var(--fast-in) var(--ease),
+    box-shadow var(--fast-in) var(--ease),
+    background-color var(--fast-in) var(--ease);
+}
+
+.token.active {
+  background: var(--kind-soft);
+  transform: translateY(-1px);
+  box-shadow:
+    inset 3px 0 0 var(--kind),
+    0 0 0 1px var(--kind),
+    0 6px 16px rgb(0 0 0 / 0.1);
+}
+
+/* Instant press feedback, before release. */
+.token:active {
+  transform: scale(0.97);
+  transition-duration: 100ms;
+}
+
+.token-text {
+  font: 0.8125rem ui-monospace, 'SF Mono', Menlo, monospace;
+  white-space: pre;
+}
+
+.token-type {
+  font: 600 0.625rem ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: 0.04em;
+  color: var(--kind);
+}
+
+.token-info {
+  margin: 0.75rem 0 0;
+  padding: 0.625rem 0.875rem;
+  height: calc(3 * 1.5em + 1.25rem); /* room for the longest description, three lines */
+  overflow-y: auto;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--secondary);
+  background: var(--surface);
+  border-radius: 0.625rem;
+  box-shadow: 0 0 0 1px var(--line);
+}
+
+.token-info strong {
+  color: var(--text);
+}
+
+.token-info-text {
+  animation: appear var(--fast-in) var(--ease);
+}
+
+.kind-keyword {
+  --kind: #0071e3;
+  --kind-soft: #e8f1fd;
+}
+
+.kind-literal {
+  --kind: #0f8f8f;
+  --kind-soft: #e2f4f3;
+}
+
+.kind-string {
+  --kind: #c2570c;
+  --kind-soft: #fdf0e5;
+}
+
+.kind-operator {
+  --kind: #8e5cf6;
+  --kind-soft: #f2ecfe;
+}
+
+.kind-separator {
+  --kind: #a1a1a6;
+  --kind-soft: #f0f0f2;
+}
+
+details summary {
+  width: fit-content;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--secondary);
+  cursor: pointer;
+  transition: color var(--fast-in) var(--ease);
+}
+
+details summary:hover {
+  color: var(--text);
+}
+
+details[open] summary {
+  margin-bottom: 0.625rem;
+}
+
+details[open] .code {
+  animation: appear 200ms var(--ease);
+}
+
+/* Product view: the timeline table */
+
+.items {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.items th {
+  text-align: left;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.items th,
+.items td {
+  padding: 0.6875rem 0.75rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.items td:first-child {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.items tbody tr {
+  animation: appear 220ms var(--ease) both;
+  animation-delay: min(calc(var(--i) * 15ms), 0.3s);
+  transition: background-color var(--fast-in) var(--ease);
+}
+
+.items tbody tr:hover {
+  background: var(--surface-sunken);
+}
+
+.row-anchor,
+.items tbody tr.row-anchor:hover {
+  background: var(--accent-soft);
+}
+
+.anchor {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.anchor-badge {
+  margin-left: 0.375rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.3125rem;
+  background: var(--accent);
+  color: #fff;
+  font: 600 0.625rem ui-monospace, 'SF Mono', monospace;
+  letter-spacing: 0.06em;
+  vertical-align: 0.0625rem;
+}
+
+.state {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--secondary);
+}
+
+/* A wait that derivation added to fill a gap, not one the text asked for. */
+.derived-badge {
+  padding: 0.0625rem 0.4375rem;
+  border: 1px dashed rgb(0 0 0 / 0.2);
+  border-radius: 0.3125rem;
+  color: var(--muted);
+  font: 0.625rem ui-monospace, 'SF Mono', monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.swatch {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 0.1875rem;
+}
+
+.swatch-fast {
+  background: var(--fast);
+}
+
+.swatch-travel {
+  background: var(--travel);
+}
+
+.swatch-wait {
+  background: var(--wait);
+}
+
+.swatch-hospitalization {
+  background: var(--hospitalization);
+}
+
+.pill {
+  display: inline-block;
+  padding: 0.0625rem 0.625rem;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.autofit-badge {
+  display: inline-block;
+  padding: 0.0625rem 0.5rem;
+  border: 1px dashed rgb(0 0 0 / 0.2);
+  border-radius: 0.3125rem;
+  color: var(--secondary);
+  font: 0.6875rem ui-monospace, 'SF Mono', monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.items tfoot td {
+  border-bottom: 0;
+  padding-top: 0.875rem;
+  font-weight: 600;
+}
+
+/* Motion: opacity only on entry, so content never slides while you read it. */
+
+@keyframes appear {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Reduced motion keeps the fades (they help follow the change) and drops every movement. */
+@media (prefers-reduced-motion: reduce) {
+  .token,
+  .token.active,
+  .token:active,
+  .picker select:active {
+    transform: none;
+  }
+
+  .token,
+  .items tbody tr {
+    animation-delay: 0s;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .topbar {
+    background: var(--surface);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --line: rgb(0 0 0 / 0.35);
+    --muted: #5e5e63;
+  }
+
+  .topbar {
+    background: var(--surface);
+  }
+}
