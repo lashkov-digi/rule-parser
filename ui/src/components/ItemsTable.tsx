@@ -33,13 +33,6 @@ function At({ item, anchorAt }: { item: Item; anchorAt: Minutes | null }) {
   );
 }
 
-// Derivation computes the gap; an auto-fit slot shows its free window instead.
-function Gap({ item }: { item: Item }) {
-  if (item.placement.kind === 'auto-fit') return <em>{duration(item.placement.to - item.placement.from)} free</em>;
-  if (item.gap === null) return <span className="muted">—</span>;
-  return <span className="muted">{item.gap < 0 ? 'overlap' : duration(item.gap)}</span>;
-}
-
 function State({ item }: { item: Item }) {
   if (item.kind === 'activity') return null;
   return (
@@ -81,7 +74,6 @@ export function ItemsTable({ timeline }: { timeline: TimelineResult }) {
       <thead>
         <tr>
           <th>At</th>
-          <th>Gap</th>
           <th>State</th>
           <th>Activity</th>
           <th>Duration</th>
@@ -92,9 +84,6 @@ export function ItemsTable({ timeline }: { timeline: TimelineResult }) {
           <tr key={item.id} className={item.isAnchor ? 'row-anchor' : undefined} style={{ '--i': i } as CSSProperties}>
             <td>
               <At item={item} anchorAt={timeline.anchorAt} />
-            </td>
-            <td>
-              <Gap item={item} />
             </td>
             <td>
               <State item={item} />
@@ -108,7 +97,7 @@ export function ItemsTable({ timeline }: { timeline: TimelineResult }) {
       </tbody>
       <tfoot>
         <tr>
-          <td colSpan={5}>
+          <td colSpan={4}>
             On site {duration(timeline.summary.onSite)} · with travel {duration(timeline.summary.withTravel)}
           </td>
         </tr>
