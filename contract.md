@@ -64,7 +64,7 @@ type ParseResult = {
 type Command = RuleCommand | SlotCommand;
 ```
 
-Every command has `id` (`c1`, `c2`, ... in written order) and `source` (the statement span, without the separator). Activity headers do not produce commands. They set `subject` on every command after them.
+Every command has `id` (`c1`, `c2`, ... in written order) and `source` (the statement span, without the separator). Headers do not produce commands. A subject header sets `subject` on every command after it. In an anchor block, each placement produces the command its activity would have under its own subject header: `subject` is the placement's activity, and an offset placement becomes a `composite` command whose `anchor` is the block's anchor.
 
 ### Rules mode
 
@@ -140,7 +140,7 @@ Defaults are filled in by the parser, so the UI never guesses. The written text 
 
 `count` on composite and dependency stays `null` when it is not written. Derivation decides what it means (for composite, the number of offsets).
 
-A statement before the first header has no subject. That is a `parse` error, and the command is dropped.
+A statement before the first header has no subject. That is a `parse` error, and the command is dropped. So is a placement outside an anchor block, and a non-placement statement inside one.
 
 ### Sequence mode
 

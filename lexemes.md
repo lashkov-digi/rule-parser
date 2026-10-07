@@ -26,6 +26,8 @@ Source PRD: [FSD: Replace Intraday with SoA Rules](https://farohealth.atlassian.
 | Rule | Starts with | Description |
 | --- | --- | --- |
 | `subject` | `ACTIVITY` | Activity header `"Name":`. Every statement after it belongs to that activity, until the next header. |
+| `anchor` | `ANCHOR` | Anchor header `anchor "Name":`. Every statement after it is a placement, until the next header. |
+| `placement` | `ACTIVITY` | Inside an anchor block only. Places the quoted activity: offsets from the block's anchor (`[COUNT] [EDGE] [OCCURRENCE] PRE/POST ...`, as in composite without `REL ACTIVITY`), or a dependency with explicit targets. |
 | `count` | `COUNT` | The activity runs N times a day, with no timing. Derivation places the occurrences. |
 | `dependency` | `AFTER`, `BEFORE`, `COUNT` | The activity runs after or before all listed activities, on every day they occur together. No time gap implied. An optional leading `COUNT` sets how many times it runs. |
 | `fasting-wait` | `STATE` | A fast or a wait of a set duration, before or after the activity. |
@@ -37,7 +39,9 @@ Source PRD: [FSD: Replace Intraday with SoA Rules](https://farohealth.atlassian.
 
 Four rules can start with `COUNT`. The token after it decides: `QUALIFIER` means spacing, `REL` means composite, `BEFORE` or `AFTER` means dependency, and `SEP` or end of input means count.
 
-`ACTIVITY` starts a statement only as a header, so it is always followed by `COLON`.
+`ACTIVITY` at the start of a statement is a subject header when `COLON` follows it. Otherwise it is a placement, which is valid only inside an anchor block. Inside a placement, after the optional `COUNT`: `EDGE`, `OCCURRENCE`, `PRE` or `POST` means offsets from the anchor, and `BEFORE` or `AFTER` means a dependency.
+
+**Two kinds of header, one role each.** A subject header (`"Name":`) names the subject of the statements after it. An anchor header (`anchor "Name":`) names the anchor of the placements after it. A block lasts until the next header of either kind.
 
 **Two modes, one lexer.** If the text starts with `SEQUENCE`, the parser reads the whole text with the sequence grammar. Otherwise it uses the rules grammar. A text is one mode from start to end; there is no switching in the middle. Both modes share the same tokens.
 
@@ -45,30 +49,31 @@ Four rules can start with `COUNT`. The token after it decides: `QUALIFIER` means
 
 | Token | Kind | Lexemes | Pattern | Rules | Description |
 | --- | --- | --- | --- | --- | --- |
-| `COUNT` | literal | | `\d+x` | count, dependency, spacing, composite | Occurrences per day, e.g. `3x`. Optional in dependency and composite; in composite the offsets define the count. |
-| `DURATION` | literal | | `\d+(\.\d+)?(min\|m\|h)` | fasting-wait, spacing, composite, travel, hospitalization, sequence | Time amount, e.g. `30m`, `90min`, `1.5h`. In hospitalization it is hours per day, from 1h to 24h; the parser checks the range, not the lexer. |
-| `PERCENT` | literal | | `\d+(\.\d+)?%` | composite | Window as a percentage of the offset, e.g. `10%`. |
-| `ACTIVITY` | string | | `"[^"]+"` | subject, dependency, composite, travel, hospitalization, sequence | Activity name in double quotes, e.g. `"Chest X-ray"`. No escapes in the POC. |
-| `COLON` | separator | `:` | | subject | Ends an activity header. |
-| `SEP` | separator | `;` | `\r?\n` | subject, count, dependency, fasting-wait, spacing, composite, travel, hospitalization, sequence | Ends a statement. Humans write newlines, machines write `;`. Repeated, leading and trailing separators are ignored, so blank lines are fine. |
-| `COMMA` | separator | `,` | | dependency, composite | List separator. |
-| `WINDOW` | operator | `±` / `+-` | | composite | Collection window for the offset right before it. Followed by `DURATION` or `PERCENT`. `+-` is the ASCII alias. |
+| `COUNT` | literal | | `\d+x` | count, dependency, spacing, composite, placement | Occurrences per day, e.g. `3x`. Optional in dependency and composite; in composite the offsets define the count. |
+| `DURATION` | literal | | `\d+(\.\d+)?(min\|m\|h)` | fasting-wait, spacing, composite, travel, hospitalization, sequence, placement | Time amount, e.g. `30m`, `90min`, `1.5h`. In hospitalization it is hours per day, from 1h to 24h; the parser checks the range, not the lexer. |
+| `PERCENT` | literal | | `\d+(\.\d+)?%` | composite, placement | Window as a percentage of the offset, e.g. `10%`. |
+| `ACTIVITY` | string | | `"[^"]+"` | subject, dependency, composite, travel, hospitalization, sequence, anchor, placement | Activity name in double quotes, e.g. `"Chest X-ray"`. No escapes in the POC. |
+| `COLON` | separator | `:` | | subject, anchor | Ends a subject or anchor header. |
+| `SEP` | separator | `;` | `\r?\n` | subject, count, dependency, fasting-wait, spacing, composite, travel, hospitalization, sequence, anchor, placement | Ends a statement. Humans write newlines, machines write `;`. Repeated, leading and trailing separators are ignored, so blank lines are fine. |
+| `COMMA` | separator | `,` | | dependency, composite, placement | List separator. |
+| `WINDOW` | operator | `±` / `+-` | | composite, placement | Collection window for the offset right before it. Followed by `DURATION` or `PERCENT`. `+-` is the ASCII alias. |
 | `DAY_ANCHOR` | keyword | `day-start`, `day-end` | | composite, travel, hospitalization | Start of the day (arrival on site) or end of the day. `day-end` is valid only in composite. |
-| `BEFORE` | keyword | `before` | | dependency, fasting-wait, travel | Dependency: runs before. Fasting/wait: the slot comes before the activity. Travel: arrives before the anchor. |
-| `AFTER` | keyword | `after` | | dependency, fasting-wait | Dependency: runs after. Fasting/wait: the slot comes after the activity. |
+| `BEFORE` | keyword | `before` | | dependency, fasting-wait, travel, placement | Dependency: runs before. Fasting/wait: the slot comes before the activity. Travel: arrives before the anchor. |
+| `AFTER` | keyword | `after` | | dependency, fasting-wait, placement | Dependency: runs after. Fasting/wait: the slot comes after the activity. |
 | `STATE` | keyword | `fast`, `wait` | | fasting-wait, sequence | Slot type. Starts a fasting or wait statement. In sequence mode, `STATE DURATION` is a fasting or wait slot. |
 | `QUALIFIER` | keyword | `exactly` / `=`, `approximately` / `approx` / `~`, `atleast` / `>=` | | spacing | How strict the gap between occurrences is. Required. |
 | `REL` | keyword | `rel` | | composite | "Relative to". Starts the anchor clause. |
-| `EDGE` | keyword | `start`, `end` | | composite | Which end of the anchor activity the offsets are measured from. Optional, default `start`. |
-| `OCCURRENCE` | keyword | `each`, `first`, `last` | | composite | Which occurrence of the anchor activity to use when it happens more than once that day. Optional, default `each`. |
-| `PRE` | keyword | `pre` | | composite | An occurrence right before the anchor. |
-| `POST` | keyword | `post` | | composite | Occurrences after the anchor. Followed by one or more `DURATION`, each with an optional `WINDOW`. |
+| `EDGE` | keyword | `start`, `end` | | composite, placement | Which end of the anchor activity the offsets are measured from. Optional, default `start`. |
+| `OCCURRENCE` | keyword | `each`, `first`, `last` | | composite, placement | Which occurrence of the anchor activity to use when it happens more than once that day. Optional, default `each`. |
+| `PRE` | keyword | `pre` | | composite, placement | An occurrence right before the anchor. |
+| `POST` | keyword | `post` | | composite, placement | Occurrences after the anchor. Followed by one or more `DURATION`, each with an optional `WINDOW`. |
 | `TRAVEL` | keyword | `travel` | | travel, sequence | Starts a travel statement. In sequence mode, `TRAVEL DURATION` is a travel slot. |
 | `SEQUENCE` | keyword | `sequence` | | sequence | First token of a legacy text. Switches the parser to the sequence grammar for the whole text. |
 | `ADMISSION` | keyword | `admission` | | travel | Hospital admission as the arrival anchor. Valid only on a day with hospitalization. |
 | `RETURN` | keyword | `return` | | travel | Starts the optional return clause. |
 | `RETURN_MODE` | keyword | `none`, `same`, `discharge` | | travel | `none`: no return travel. `same`: the same duration, after day end. `discharge`: after discharge. A `DURATION` in its place means a different return duration. |
 | `HOSP` | keyword | `hosp` | | hospitalization | Starts a hospitalization statement. |
+| `ANCHOR` | keyword | `anchor` | | anchor | Starts an anchor header. Followed by `ACTIVITY` and `COLON`. |
 | `FROM` | keyword | `from` | | hospitalization | Start point of the hospitalization. Optional, default `day-start`. |
 
 ## Examples
@@ -81,6 +86,8 @@ Four rules can start with `COUNT`. The token after it decides: `QUALIFIER` means
 | count | `3x` | `COUNT` |
 | subject | `"PK sampling": 3x rel "IP Administration" pre, post 1h 2h; "Vital Signs": 3x before "PK sampling"; "12-lead ECG": after "Vital Signs"` | `ACTIVITY COLON COUNT REL ACTIVITY PRE COMMA POST DURATION DURATION SEP ACTIVITY COLON COUNT BEFORE ACTIVITY SEP ACTIVITY COLON AFTER ACTIVITY` |
 | subject | `"PK sampling": fast 8h before; after "Vital Signs"; rel "IP Administration" pre, post 1h 2h 4h` | `ACTIVITY COLON STATE DURATION BEFORE SEP AFTER ACTIVITY SEP REL ACTIVITY PRE COMMA POST DURATION DURATION DURATION` |
+| anchor | `anchor "IP Administration": "PK sampling" 3x pre, post 1h 2h; "Vital Signs" 3x before "PK sampling"; "12-lead ECG" after "Vital Signs"` | `ANCHOR ACTIVITY COLON ACTIVITY COUNT PRE COMMA POST DURATION DURATION SEP ACTIVITY COUNT BEFORE ACTIVITY SEP ACTIVITY AFTER ACTIVITY` |
+| placement | `"PK sampling" 4x end first pre, post 1h ±6m` | `ACTIVITY COUNT EDGE OCCURRENCE PRE COMMA POST DURATION WINDOW DURATION` |
 | sequence | `sequence; "Vital Signs" 15m; "12 Lead ECG" 8m; "PK Sampling (Serum)" 5m; "IP Administration - Oral" 1m; wait 40m; "PK Sampling (Serum)" 5m` | `SEQUENCE SEP ACTIVITY DURATION SEP ACTIVITY DURATION SEP ACTIVITY DURATION SEP ACTIVITY DURATION SEP STATE DURATION SEP ACTIVITY DURATION` |
 | sequence | `sequence; fast 8h; travel 30m; "Vital Signs" 15m` | `SEQUENCE SEP STATE DURATION SEP TRAVEL DURATION SEP ACTIVITY DURATION` |
 | fasting-wait | `fast 10h before` | `STATE DURATION BEFORE` |
@@ -106,6 +113,15 @@ The first `subject` example is the product scenario (IP Administration with no r
   after "Vital Signs"
 ```
 
+The same scenario written anchor-first. It produces the same commands:
+
+```
+anchor "IP Administration":
+  "PK sampling" 3x pre, post 1h 2h
+  "Vital Signs" 3x before "PK sampling"
+  "12-lead ECG" after "Vital Signs"
+```
+
 A hand-built day (legacy intraday) in sequence mode, as a human writes it:
 
 ```
@@ -128,6 +144,8 @@ wait 40m
 
 Not lexer concerns. They are recorded here so the parser and the timeline derivation follow the same rules.
 
+- **Anchor-first and subject-first are the same rules:** a placement is the statement its activity would have under its own subject header. `"PK sampling" 3x pre, post 1h 2h` under `anchor "IP Administration":` is `"PK sampling": 3x rel "IP Administration" pre, post 1h 2h`. A dependency placement is copied as written: its targets are always explicit and never default to the anchor. The parser emits the same commands for both forms, and the two forms can be mixed in one text.
+- **Placements carry offsets and dependencies only.** Other rules for an activity (count, spacing, fasting-wait, travel, hospitalization) go under its subject header. Rules for the anchor itself go under a subject header for the anchor.
 - **Bare count:** `3x` with no timing is valid. Derivation places the occurrences (CDT order, auto-fit into gaps).
 - **Dependencies between repeated activities pair by occurrence:** with `3x before "PK sampling"` and 3 PK draws, the 1st Vital Signs goes before the 1st PK draw, the 2nd before the 2nd, and so on.
 - **A dependency without a count inherits the count of its target:** `"12-lead ECG": after "Vital Signs"` with Vital Signs at 3x runs the ECG 3 times, one after each Vital Signs. A written count always wins.

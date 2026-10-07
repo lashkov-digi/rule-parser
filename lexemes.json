@@ -9,6 +9,20 @@
       "description": "Activity header `\"Name\":`. Every statement after it belongs to that activity, until the next header."
     },
     {
+      "name": "anchor",
+      "startsWith": [
+        "ANCHOR"
+      ],
+      "description": "Anchor header `anchor \"Name\":`. Every statement after it is a placement, until the next header."
+    },
+    {
+      "name": "placement",
+      "startsWith": [
+        "ACTIVITY"
+      ],
+      "description": "Inside an anchor block only. Places the quoted activity: offsets from the block's anchor (`[COUNT] [EDGE] [OCCURRENCE] PRE/POST ...`, as in composite without `REL ACTIVITY`), or a dependency with explicit targets."
+    },
+    {
       "name": "count",
       "startsWith": [
         "COUNT"
@@ -78,7 +92,8 @@
         "count",
         "dependency",
         "spacing",
-        "composite"
+        "composite",
+        "placement"
       ],
       "description": "Occurrences per day, e.g. `3x`. Optional in dependency and composite; in composite the offsets define the count."
     },
@@ -93,7 +108,8 @@
         "composite",
         "travel",
         "hospitalization",
-        "sequence"
+        "sequence",
+        "placement"
       ],
       "description": "Time amount, e.g. `30m`, `90min`, `1.5h`. In hospitalization it is hours per day, from 1h to 24h; the parser checks the range, not the lexer."
     },
@@ -103,7 +119,8 @@
       "lexemes": [],
       "pattern": "\\d+(\\.\\d+)?%",
       "rules": [
-        "composite"
+        "composite",
+        "placement"
       ],
       "description": "Window as a percentage of the offset, e.g. `10%`."
     },
@@ -118,7 +135,9 @@
         "composite",
         "travel",
         "hospitalization",
-        "sequence"
+        "sequence",
+        "anchor",
+        "placement"
       ],
       "description": "Activity name in double quotes, e.g. `\"Chest X-ray\"`. No escapes in the POC."
     },
@@ -133,9 +152,10 @@
       ],
       "pattern": null,
       "rules": [
-        "subject"
+        "subject",
+        "anchor"
       ],
-      "description": "Ends an activity header."
+      "description": "Ends a subject or anchor header."
     },
     {
       "name": "SEP",
@@ -156,7 +176,9 @@
         "composite",
         "travel",
         "hospitalization",
-        "sequence"
+        "sequence",
+        "anchor",
+        "placement"
       ],
       "description": "Ends a statement. Humans write newlines, machines write `;`. Repeated, leading and trailing separators are ignored, so blank lines are fine."
     },
@@ -172,7 +194,8 @@
       "pattern": null,
       "rules": [
         "dependency",
-        "composite"
+        "composite",
+        "placement"
       ],
       "description": "List separator."
     },
@@ -189,7 +212,8 @@
       ],
       "pattern": null,
       "rules": [
-        "composite"
+        "composite",
+        "placement"
       ],
       "description": "Collection window for the offset right before it. Followed by `DURATION` or `PERCENT`. `+-` is the ASCII alias."
     },
@@ -227,7 +251,8 @@
       "rules": [
         "dependency",
         "fasting-wait",
-        "travel"
+        "travel",
+        "placement"
       ],
       "description": "Dependency: runs before. Fasting/wait: the slot comes before the activity. Travel: arrives before the anchor."
     },
@@ -243,7 +268,8 @@
       "pattern": null,
       "rules": [
         "dependency",
-        "fasting-wait"
+        "fasting-wait",
+        "placement"
       ],
       "description": "Dependency: runs after. Fasting/wait: the slot comes after the activity."
     },
@@ -327,7 +353,8 @@
       ],
       "pattern": null,
       "rules": [
-        "composite"
+        "composite",
+        "placement"
       ],
       "description": "Which end of the anchor activity the offsets are measured from. Optional, default `start`."
     },
@@ -350,7 +377,8 @@
       ],
       "pattern": null,
       "rules": [
-        "composite"
+        "composite",
+        "placement"
       ],
       "description": "Which occurrence of the anchor activity to use when it happens more than once that day. Optional, default `each`."
     },
@@ -365,7 +393,8 @@
       ],
       "pattern": null,
       "rules": [
-        "composite"
+        "composite",
+        "placement"
       ],
       "description": "An occurrence right before the anchor."
     },
@@ -380,7 +409,8 @@
       ],
       "pattern": null,
       "rules": [
-        "composite"
+        "composite",
+        "placement"
       ],
       "description": "Occurrences after the anchor. Followed by one or more `DURATION`, each with an optional `WINDOW`."
     },
@@ -484,6 +514,21 @@
       "description": "Starts a hospitalization statement."
     },
     {
+      "name": "ANCHOR",
+      "kind": "keyword",
+      "lexemes": [
+        {
+          "value": "anchor",
+          "aliases": []
+        }
+      ],
+      "pattern": null,
+      "rules": [
+        "anchor"
+      ],
+      "description": "Starts an anchor header. Followed by `ACTIVITY` and `COLON`."
+    },
+    {
       "name": "FROM",
       "kind": "keyword",
       "lexemes": [
@@ -581,6 +626,47 @@
         "POST",
         "DURATION",
         "DURATION",
+        "DURATION"
+      ]
+    },
+    {
+      "rule": "anchor",
+      "text": "anchor \"IP Administration\": \"PK sampling\" 3x pre, post 1h 2h; \"Vital Signs\" 3x before \"PK sampling\"; \"12-lead ECG\" after \"Vital Signs\"",
+      "tokens": [
+        "ANCHOR",
+        "ACTIVITY",
+        "COLON",
+        "ACTIVITY",
+        "COUNT",
+        "PRE",
+        "COMMA",
+        "POST",
+        "DURATION",
+        "DURATION",
+        "SEP",
+        "ACTIVITY",
+        "COUNT",
+        "BEFORE",
+        "ACTIVITY",
+        "SEP",
+        "ACTIVITY",
+        "AFTER",
+        "ACTIVITY"
+      ]
+    },
+    {
+      "rule": "placement",
+      "text": "\"PK sampling\" 4x end first pre, post 1h ±6m",
+      "tokens": [
+        "ACTIVITY",
+        "COUNT",
+        "EDGE",
+        "OCCURRENCE",
+        "PRE",
+        "COMMA",
+        "POST",
+        "DURATION",
+        "WINDOW",
         "DURATION"
       ]
     },
