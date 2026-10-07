@@ -7,7 +7,8 @@
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:parsers": "vitest run src/parsers"
+    "test:parsers": "vitest run src/parsers",
+    "bench": "vitest bench --run --reporter=default"
   },
   "dependencies": {
     "react": "^19.3.0",
