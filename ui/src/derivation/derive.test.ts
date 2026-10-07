@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { test } from 'node:test';
+import { test } from 'vitest';
 import { derive, type DayConfig, type ParseResult, type TimelineResult } from './index.ts';
 
 // fixtures/<name>.parse.json stands in for the parser; <name>.items.json is the timeline worked out by hand.
