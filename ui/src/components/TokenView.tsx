@@ -26,7 +26,7 @@ export function TokenView({ text, tokens }: { text: string; tokens: Token[] }) {
   return (
     <>
       <section>
-        <h2>Text</h2>
+        <h2>Lexemes</h2>
         <pre className="code">
           {segments.map((segment, i) =>
             segment.index === null ? (

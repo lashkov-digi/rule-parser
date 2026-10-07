@@ -174,7 +174,94 @@ h2 {
   color: #c4001d;
 }
 
-/* Developer view: text, tokens, JSON */
+/* Developer view: input, diagnostics, tokens, JSON */
+
+.input-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.reset {
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--accent);
+  padding: 0.125rem 0.5rem;
+  border: none;
+  border-radius: 0.375rem;
+  background: none;
+  cursor: pointer;
+}
+
+.reset:hover:not(:disabled) {
+  background: var(--accent-soft);
+}
+
+.reset:disabled {
+  color: var(--muted);
+  cursor: default;
+}
+
+.input {
+  display: block;
+  width: 100%;
+  resize: vertical;
+  border: none;
+  color: var(--text);
+}
+
+.input:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 1px var(--accent),
+    0 0 0 4px rgb(0 113 227 / 0.18);
+}
+
+.input:disabled {
+  color: var(--muted);
+  background: var(--surface-sunken);
+  cursor: not-allowed;
+}
+
+.diagnostics-empty {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+}
+
+.diagnostics {
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.8125rem;
+}
+
+.diagnostic {
+  padding: 0.375rem 0.625rem;
+  border-radius: 0.375rem;
+}
+
+.diagnostic + .diagnostic {
+  margin-top: 0.25rem;
+}
+
+.diagnostic-error {
+  color: #c4001d;
+  background: rgb(196 0 29 / 0.06);
+}
+
+.diagnostic-warning {
+  color: #8a5300;
+  background: rgb(224 138 43 / 0.1);
+}
+
+.diagnostic-where {
+  font: 600 0.75rem ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+.diagnostic-expected {
+  color: var(--secondary);
+}
 
 .code {
   margin: 0;

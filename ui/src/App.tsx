@@ -1,22 +1,20 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { derive } from './derivation/index.ts';
 import scenariosJson from '../../fixtures/scenarios.json';
+import { DiagnosticList } from './components/DiagnosticList';
 import { ItemsTable } from './components/ItemsTable';
 import { TokenView } from './components/TokenView';
+import { createFixtureParser, FIXTURES } from './parsers/fixtures/index.ts';
 import { parsers } from './parsers/registry.ts';
 import type { RuleParser } from './parsers/types.ts';
 import type { Scenario } from './timeline';
 
 const scenarios = scenariosJson as unknown as Scenario[];
 
-// The hand-written tokens and parse result in scenarios.json. Picked when no library is chosen.
-const FIXTURES = 'fixtures';
-
-// Runs a library on the scenario text. A library that throws shows its error instead of a timeline.
-function run(parser: RuleParser | undefined, scenario: Scenario) {
-  if (!parser) return { tokens: scenario.tokens, parse: scenario.parse, error: null };
+// Runs a parser on the text. A parser that throws shows its error instead of a timeline.
+function run(parser: RuleParser, text: string) {
   try {
-    return { tokens: parser.tokenize(scenario.text).tokens, parse: parser.parse(scenario.text), error: null };
+    return { tokens: parser.tokenize(text).tokens, parse: parser.parse(text), error: null };
   } catch (error) {
     return { tokens: [], parse: null, error: error instanceof Error ? error.message : String(error) };
   }
@@ -31,10 +29,24 @@ export function App() {
   const [shownId, setShownId] = useState(id);
   const swap = useRef<number | undefined>(undefined);
   const scenario = scenarios.find((candidate) => candidate.id === shownId) ?? scenarios[0];
+
+  // Edited text per scenario. A scenario with no entry shows its original text.
+  const [edits, setEdits] = useState<Record<string, string>>({});
+  const text = edits[scenario.id] ?? scenario.text;
+  const edit = (next: string) => setEdits((current) => ({ ...current, [scenario.id]: next }));
+  const reset = () => setEdits(({ [scenario.id]: _dropped, ...rest }) => rest);
+
   const [parserId, setParserId] = useState(FIXTURES);
-  const parser = parsers.find((candidate) => candidate.id === parserId);
-  const result = useMemo(() => run(parser, scenario), [parser, scenario]);
+  const parser = useMemo(
+    () => parsers.find((candidate) => candidate.id === parserId) ?? createFixtureParser(scenario),
+    [parserId, scenario],
+  );
+  // The fixtures ignore the text, so editing is off there and the original text is shown.
+  const editable = parser.id !== FIXTURES;
+  const shownText = editable ? text : scenario.text;
+  const result = useMemo(() => run(parser, shownText), [parser, shownText]);
   const timeline = useMemo(() => result.parse && derive(result.parse, scenario.config), [result, scenario]);
+  const diagnostics = [...(result.parse?.diagnostics ?? []), ...(timeline?.diagnostics ?? [])];
 
   // A new pick during a fade restarts the timer, so the last choice always wins.
   const choose = (next: string) => {
@@ -80,7 +92,25 @@ export function App() {
         </main>
 
         <aside className="panel panel-dev">
-          <TokenView text={scenario.text} tokens={result.tokens} />
+          <section>
+            <div className="input-head">
+              <h2>Input</h2>
+              <button type="button" className="reset" onClick={reset} disabled={!editable || text === scenario.text}>
+                Reset
+              </button>
+            </div>
+            <textarea
+              className="code input"
+              value={shownText}
+              onChange={(event) => edit(event.target.value)}
+              disabled={!editable}
+              rows={shownText.split('\n').length + 1}
+              spellCheck={false}
+              aria-label="Rule text"
+            />
+            <DiagnosticList diagnostics={diagnostics} />
+          </section>
+          <TokenView text={shownText} tokens={result.tokens} />
           <section>
             <details>
               <summary>Parse JSON</summary>
