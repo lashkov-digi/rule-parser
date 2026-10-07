@@ -6,7 +6,8 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
-    "test": "node --test src/derivation/derive.test.ts"
+    "test": "node --test 'src/**/*.test.ts'",
+    "test:parsers": "node --test src/parsers/conformance.test.ts"
   },
   "dependencies": {
     "react": "^19.3.0",
