@@ -50,6 +50,7 @@ body {
   height: var(--bar-height);
   display: flex;
   align-items: center;
+  gap: 1.5rem;
   padding: 0 1.5rem;
   background: rgb(255 255 255 / 0.72);
   backdrop-filter: blur(20px) saturate(180%);
@@ -162,6 +163,15 @@ h2 {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 4px rgb(0 113 227 / 0.18);
+}
+
+/* A library that threw instead of returning a result */
+
+.parser-error {
+  margin: 0;
+  font-family: ui-monospace, monospace;
+  font-size: 0.8125rem;
+  color: #c4001d;
 }
 
 /* Developer view: text, tokens, JSON */
