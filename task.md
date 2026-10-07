@@ -14,10 +14,23 @@ Find out which open-source lexer/parser library fits the rule DSL best. For each
 
 1. `tokenize(text)`, returning the token sequences in the `lexemes.md` Examples table.
 2. `parse(text)`, returning `ParseResult` that matches every `fixtures/*.parse.json` (`message` excluded), for both modes.
-3. A test file that runs the Examples table and the fixtures against that library.
+3. The adapter registered in `ui/src/parsers/registry.ts`, so the shared conformance test runs the Examples table and the fixtures against it.
 4. A short write-up scored on the criteria below.
 
 The printer and the derivation are not part of this task. Derivation already exists in `ui/src/derivation/` and reads your `ParseResult`, so you can check a parser end to end by passing its output to `derive()`.
+
+## Adding a library
+
+Each library lives in its own folder under `ui/src/parsers/` and implements `RuleParser` from `ui/src/parsers/types.ts`.
+
+1. Copy `ui/src/parsers/_template/` to `ui/src/parsers/<library>/` and set `id` (the folder name) and `title`.
+2. Install the library in `ui/` (`npm install <library>`).
+3. Implement `tokenize` and `parse`.
+4. Import the adapter in `ui/src/parsers/registry.ts` and add it to `parsers`.
+5. Run `npm run test:parsers` in `ui/`. `ui/src/parsers/conformance.test.ts` runs the same checks for every registered library: token types for each Examples row, exact tokens for each scenario in `fixtures/scenarios.json`, and every `fixtures/*.parse.json` with `message` left out.
+6. Run `npm run dev` in `ui/` and pick the library in the Parser picker. The timeline is derived from the library's output. "Hand-written fixtures" shows the stand-in data for comparison.
+
+Library-specific tests or benchmarks go in the library's own folder.
 
 ## Evaluation criteria
 
