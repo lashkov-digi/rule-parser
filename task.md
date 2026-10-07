@@ -28,7 +28,8 @@ Each library lives in its own folder under `ui/src/parsers/` and implements `Rul
 3. Implement `tokenize` and `parse`.
 4. Import the adapter in `ui/src/parsers/registry.ts` and add it to `parsers`.
 5. Run `npm run test:parsers` in `ui/`. `ui/src/parsers/conformance.test.ts` runs the same checks for every registered library: token types for each Examples row, exact tokens for each scenario in `fixtures/scenarios.json`, and every `fixtures/*.parse.json` with `message` left out.
-6. Run `npm run dev` in `ui/` and pick the library in the Parser picker. The timeline is derived from the library's output. "Hand-written fixtures" shows the stand-in data for comparison.
+6. Run `npm run bench` in `ui/`. `ui/src/parsers/parsers.bench.ts` times `tokenize` and `parse` separately for every registered library, on each scenario and on generated 200-line rules and sequence texts, and prints one comparison table per input and step. Compare libraries within one run only; timings drift between runs.
+7. Run `npm run dev` in `ui/` and pick the library in the Parser picker. The input becomes editable, and the timeline and diagnostics follow the library's output. "Hand-written fixtures" shows the stand-in data for comparison, with the input disabled.
 
 Library-specific tests or benchmarks go in the library's own folder.
 
@@ -38,7 +39,7 @@ Library-specific tests or benchmarks go in the library's own folder.
 - **Adding a rule:** how many places change to add a new statement type? Try one: a made-up `repeat 2x` statement, then remove it.
 - **Two modes:** how cleanly does it switch between the rules grammar and the sequence grammar after the first token?
 - **Types:** does it produce TypeScript types, or do we write them by hand?
-- **Runtime:** bundle size in the browser, parse time for a 200-line text, and maintenance activity of the project.
+- **Runtime:** bundle size in the browser, parse time for a 200-line text (`npm run bench`), and maintenance activity of the project.
 - **Editor support:** can the same grammar drive completion and highlighting in the `RuleEditor`?
 
 ## Out of scope
