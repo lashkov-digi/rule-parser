@@ -131,6 +131,7 @@ export function App() {
             />
             <DiagnosticList diagnostics={diagnostics} />
           </section>
+          <TokenView text={shownText} tokens={result.tokens} />
           {result.parse?.mode === 'rules' && (
             <CatalogEditor
               catalog={config.activities}
@@ -141,7 +142,6 @@ export function App() {
               onReset={resetConfig}
             />
           )}
-          <TokenView text={shownText} tokens={result.tokens} />
           <section>
             <details>
               <summary>Parse JSON</summary>
