@@ -67,40 +67,82 @@ export function App() {
   };
   // Activity names in the text, in written order. Sequence mode writes durations in the text and has no catalog.
   const mentioned = [...new Set(result.tokens.filter((token) => token.type === 'ACTIVITY').map((token) => token.text.slice(1, -1)))];
+  // Tokens behind each row, by index into result.tokens: every token of the commands that placed it. A derived wait
+  // has no command of its own. It is the gap before a row a composite fixed later, and derivation puts it right before
+  // that row. Offset i of a composite fixes occurrence i + 1 of its subject, so the wait owns the one offset that fixed
+  // that row: `post 1h` for "PK sampling · 2 of 3". Without such an offset it falls back to the row's commands.
+  const rowTokens = useMemo(() => {
+    const owned = new Map<string, Set<number>>();
+    if (!timeline || !result.parse) return owned;
+    const commands = result.parse.commands;
+    const tokensIn = (sources: Array<{ from: number; to: number }>) =>
+      result.tokens.flatMap((token, index) =>
+        sources.some((source) => source.from <= token.from && token.to <= source.to) ? [index] : [],
+      );
+    const commandTokens = (ids: string[]) =>
+      tokensIn(commands.filter((command) => ids.includes(command.id)).map((command) => command.source));
+    // A composite's offsets as token groups, in written order: `pre` alone, or one `post` duration with its window.
+    // Every group keeps its `post` keyword, so the second one reads `post 2h`.
+    const offsetGroups = (source: { from: number; to: number }) => {
+      const groups: number[][] = [];
+      let post: number | null = null;
+      let inWindow = false;
+      for (const index of tokensIn([source])) {
+        const type = result.tokens[index].type;
+        if (type === 'PRE') groups.push([index]);
+        else if (type === 'POST') post = index;
+        else if (type === 'COMMA') post = null;
+        else if (type === 'WINDOW') {
+          groups.at(-1)?.push(index);
+          inWindow = true;
+        } else if (type === 'DURATION' || type === 'PERCENT') {
+          if (inWindow) groups.at(-1)?.push(index);
+          else if (post !== null) groups.push([post, index]);
+          inWindow = false;
+        }
+      }
+      return groups;
+    };
+    const fixingOffset = (row: (typeof timeline.items)[number] | undefined) => {
+      if (!row?.occurrence) return [];
+      const n = row.occurrence.n;
+      return commands
+        .filter((command) => row.commandIds.includes(command.id) && command.type === 'composite' && row.activities.includes(command.subject))
+        .flatMap((command) => offsetGroups(command.source)[n - 1] ?? []);
+    };
+    timeline.items.forEach((item, index, items) => {
+      if (!item.flags.includes('derived-wait')) return owned.set(item.id, new Set(commandTokens(item.commandIds)));
+      const next = items[index + 1];
+      const offset = fixingOffset(next);
+      owned.set(item.id, new Set(offset.length > 0 ? offset : commandTokens(next?.commandIds ?? [])));
+    });
+    return owned;
+  }, [timeline, result]);
   // The hovered token, by index into result.tokens. An edit can leave it past the end, so every read checks.
   const [activeToken, setActiveToken] = useState<number | null>(null);
   // Timeline rows behind the hovered token. An activity name picks the rows of that activity, wherever it is
   // written: in `after "Vital Signs"` it means Vital Signs, not the subject the rule places. Any other token picks
-  // the rows placed by the command whose source holds it.
+  // the rows that own it.
   const linked = useMemo(() => {
     const token = activeToken === null ? undefined : result.tokens[activeToken];
-    if (!token || !timeline || !result.parse) return new Set<string>();
-    if (token.type === 'ACTIVITY') {
-      const name = token.text.slice(1, -1);
-      return new Set(timeline.items.filter((item) => item.activities.includes(name)).map((item) => item.id));
-    }
-    const commandIds = new Set(
-      result.parse.commands
-        .filter((command) => command.source.from <= token.from && token.to <= command.source.to)
-        .map((command) => command.id),
+    if (activeToken === null || !token || !timeline) return new Set<string>();
+    const name = token.type === 'ACTIVITY' ? token.text.slice(1, -1) : null;
+    return new Set(
+      timeline.items
+        .filter((item) => (name === null ? rowTokens.get(item.id)?.has(activeToken) : item.activities.includes(name)))
+        .map((item) => item.id),
     );
-    return new Set(timeline.items.filter((item) => item.commandIds.some((id) => commandIds.has(id))).map((item) => item.id));
-  }, [activeToken, result, timeline]);
-  // The other direction: the hovered timeline row lights up the tokens behind it. Those are the mentions of its
-  // activities and every token of the commands that placed it.
+  }, [activeToken, result, timeline, rowTokens]);
+  // The other direction: the hovered timeline row lights up the tokens it owns and the mentions of its activities.
   const [activeItem, setActiveItem] = useState<string | null>(null);
   const linkedTokens = useMemo(() => {
     const item = timeline?.items.find((candidate) => candidate.id === activeItem);
-    if (!item || !result.parse) return new Set<number>();
-    const sources = result.parse.commands.filter((command) => item.commandIds.includes(command.id)).map((command) => command.source);
-    return new Set(
-      result.tokens.flatMap((token, index) => {
-        const named = token.type === 'ACTIVITY' && item.activities.includes(token.text.slice(1, -1));
-        const inside = sources.some((source) => source.from <= token.from && token.to <= source.to);
-        return named || inside ? [index] : [];
-      }),
+    if (!item) return new Set<number>();
+    const named = result.tokens.flatMap((token, index) =>
+      token.type === 'ACTIVITY' && item.activities.includes(token.text.slice(1, -1)) ? [index] : [],
     );
-  }, [activeItem, result, timeline]);
+    return new Set([...(rowTokens.get(item.id) ?? []), ...named]);
+  }, [activeItem, result, timeline, rowTokens]);
   const diagnostics = [...(result.parse?.diagnostics ?? []), ...(timeline?.diagnostics ?? [])];
 
   // A new pick during a fade restarts the timer, so the last choice always wins.
