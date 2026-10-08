@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { derive } from './derivation/index.ts';
+import { derive, type DayConfig } from './derivation/index.ts';
 import scenariosJson from '../../fixtures/scenarios.json';
+import { CatalogEditor } from './components/CatalogEditor';
 import { DiagnosticList } from './components/DiagnosticList';
 import { ItemsTable } from './components/ItemsTable';
 import { TokenView } from './components/TokenView';
@@ -36,6 +37,12 @@ export function App() {
   const edit = (next: string) => setEdits((current) => ({ ...current, [scenario.id]: next }));
   const reset = () => setEdits(({ [scenario.id]: _dropped, ...rest }) => rest);
 
+  // Edited day config (the activity catalog and CDT order) per scenario, kept apart from the text.
+  const [configs, setConfigs] = useState<Record<string, DayConfig>>({});
+  const config = configs[scenario.id] ?? scenario.config;
+  const editConfig = (next: DayConfig) => setConfigs((current) => ({ ...current, [scenario.id]: next }));
+  const resetConfig = () => setConfigs(({ [scenario.id]: _dropped, ...rest }) => rest);
+
   const [parserId, setParserId] = useState(FIXTURES);
   const parser = useMemo(
     () => parsers.find((candidate) => candidate.id === parserId) ?? createFixtureParser(scenario),
@@ -45,7 +52,21 @@ export function App() {
   const editable = parser.id !== FIXTURES;
   const shownText = editable ? text : scenario.text;
   const result = useMemo(() => run(parser, shownText), [parser, shownText]);
-  const timeline = useMemo(() => result.parse && derive(result.parse, scenario.config), [result, scenario]);
+  const timeline = useMemo(() => result.parse && derive(result.parse, config), [result, config]);
+
+  // A removed activity leaves the CDT order too, so a later one with the same name starts at the end.
+  const editCatalog = (activities: DayConfig['activities']) =>
+    editConfig({ activities, cdtOrder: config.cdtOrder.filter((name) => name in activities) });
+  // The text refers to an activity by its quoted name, so a rename rewrites the text as well, when it is editable.
+  const rename = (from: string, to: string) => {
+    editConfig({
+      activities: Object.fromEntries(Object.entries(config.activities).map(([name, entry]) => [name === from ? to : name, entry])),
+      cdtOrder: config.cdtOrder.map((name) => (name === from ? to : name)),
+    });
+    if (editable) edit(text.replaceAll(`"${from}"`, `"${to}"`));
+  };
+  // Activity names in the text, in written order. Sequence mode writes durations in the text and has no catalog.
+  const mentioned = [...new Set(result.tokens.filter((token) => token.type === 'ACTIVITY').map((token) => token.text.slice(1, -1)))];
   const diagnostics = [...(result.parse?.diagnostics ?? []), ...(timeline?.diagnostics ?? [])];
 
   // A new pick during a fade restarts the timer, so the last choice always wins.
@@ -110,6 +131,16 @@ export function App() {
             />
             <DiagnosticList diagnostics={diagnostics} />
           </section>
+          {result.parse?.mode === 'rules' && (
+            <CatalogEditor
+              catalog={config.activities}
+              mentioned={mentioned}
+              changed={scenario.id in configs}
+              onChange={editCatalog}
+              onRename={rename}
+              onReset={resetConfig}
+            />
+          )}
           <TokenView text={shownText} tokens={result.tokens} />
           <section>
             <details>
