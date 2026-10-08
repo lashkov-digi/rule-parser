@@ -133,29 +133,32 @@ export function App() {
   }, [timeline, result]);
   // The hovered token, by index into result.tokens. An edit can leave it past the end, so every read checks.
   const [activeToken, setActiveToken] = useState<number | null>(null);
-  // Timeline rows behind the hovered token. An activity name picks the rows of that activity, wherever it is
-  // written: in `after "Vital Signs"` it means Vital Signs, not the subject the rule places. Any other token picks
-  // the rows that own it.
+  // In rules mode an activity name stands for the activity, wherever it is written: in `after "Vital Signs"` it means
+  // Vital Signs, not the subject the rule places. In sequence mode every line is one slot, so a name means that slot
+  // alone and goes through the slot command like any other token.
+  const byName = result.parse?.mode === 'rules';
+  // Timeline rows behind the hovered token: the rows of the activity it names, or else the rows that own it.
   const linked = useMemo(() => {
     const token = activeToken === null ? undefined : result.tokens[activeToken];
     if (activeToken === null || !token || !timeline) return new Set<string>();
-    const name = token.type === 'ACTIVITY' ? token.text.slice(1, -1) : null;
+    const name = byName && token.type === 'ACTIVITY' ? token.text.slice(1, -1) : null;
     return new Set(
       timeline.items
         .filter((item) => (name === null ? rowTokens.get(item.id)?.has(activeToken) : item.activities.includes(name)))
         .map((item) => item.id),
     );
-  }, [activeToken, result, timeline, rowTokens]);
-  // The other direction: the hovered timeline row lights up the tokens it owns and the mentions of its activities.
+  }, [activeToken, result, timeline, rowTokens, byName]);
+  // The other direction: the hovered timeline row lights up the tokens it owns and, in rules mode, the mentions of its
+  // activities.
   const [activeItem, setActiveItem] = useState<string | null>(null);
   const linkedTokens = useMemo(() => {
     const item = timeline?.items.find((candidate) => candidate.id === activeItem);
     if (!item) return new Set<number>();
     const named = result.tokens.flatMap((token, index) =>
-      token.type === 'ACTIVITY' && item.activities.includes(token.text.slice(1, -1)) ? [index] : [],
+      byName && token.type === 'ACTIVITY' && item.activities.includes(token.text.slice(1, -1)) ? [index] : [],
     );
     return new Set([...(rowTokens.get(item.id) ?? []), ...named]);
-  }, [activeItem, result, timeline, rowTokens]);
+  }, [activeItem, result, timeline, rowTokens, byName]);
   const diagnostics = [...(result.parse?.diagnostics ?? []), ...(timeline?.diagnostics ?? [])];
 
   // A new pick during a fade restarts the timer, so the last choice always wins.
