@@ -11,6 +11,7 @@
     "bench": "vitest bench --run --reporter=default"
   },
   "dependencies": {
+    "ohm-js": "^17.5.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
   },
