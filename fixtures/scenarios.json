@@ -824,5 +824,414 @@
       "activities": {},
       "cdtOrder": []
     }
+  },
+  {
+    "id": "s4",
+    "title": "Fasting, waits and hospitalization",
+    "text": "\"IP Administration\":\n  fast 8h before\n  wait 30m after\n  hosp 6h from \"IP Administration\"\n\"PK sampling\":\n  3x rel \"IP Administration\" pre, post 1h 2h\n\"Vital Signs\":\n  3x before \"PK sampling\"\n  wait 5m before\n\"12-lead ECG\":\n  after \"Vital Signs\"",
+    "tokens": [
+      {
+        "type": "ACTIVITY",
+        "text": "\"IP Administration\"",
+        "from": 0,
+        "to": 19
+      },
+      {
+        "type": "COLON",
+        "text": ":",
+        "from": 19,
+        "to": 20
+      },
+      {
+        "type": "SEP",
+        "text": "\n",
+        "from": 20,
+        "to": 21
+      },
+      {
+        "type": "STATE",
+        "text": "fast",
+        "from": 23,
+        "to": 27
+      },
+      {
+        "type": "DURATION",
+        "text": "8h",
+        "from": 28,
+        "to": 30
+      },
+      {
+        "type": "BEFORE",
+        "text": "before",
+        "from": 31,
+        "to": 37
+      },
+      {
+        "type": "SEP",
+        "text": "\n",
+        "from": 37,
+        "to": 38
+      },
+      {
+        "type": "STATE",
+        "text": "wait",
+        "from": 40,
+        "to": 44
+      },
+      {
+        "type": "DURATION",
+        "text": "30m",
+        "from": 45,
+        "to": 48
+      },
+      {
+        "type": "AFTER",
+        "text": "after",
+        "from": 49,
+        "to": 54
+      },
+      {
+        "type": "SEP",
+        "text": "\n",
+        "from": 54,
+        "to": 55
+      },
+      {
+        "type": "HOSP",
+        "text": "hosp",
+        "from": 57,
+        "to": 61
+      },
+      {
+        "type": "DURATION",
+        "text": "6h",
+        "from": 62,
+        "to": 64
+      },
+      {
+        "type": "FROM",
+        "text": "from",
+        "from": 65,
+        "to": 69
+      },
+      {
+        "type": "ACTIVITY",
+        "text": "\"IP Administration\"",
+        "from": 70,
+        "to": 89
+      },
+      {
+        "type": "SEP",
+        "text": "\n",
+        "from": 89,
+        "to": 90
+      },
+      {
+        "type": "ACTIVITY",
+        "text": "\"PK sampling\"",
+        "from": 90,
+        "to": 103
+      },
+      {
+        "type": "COLON",
+        "text": ":",
+        "from": 103,
+        "to": 104
+      },
+      {
+        "type": "SEP",
+        "text": "\n",
+        "from": 104,
+        "to": 105
+      },
+      {
+        "type": "COUNT",
+        "text": "3x",
+        "from": 107,
+        "to": 109
+      },
+      {
+        "type": "REL",
+        "text": "rel",
+        "from": 110,
+        "to": 113
+      },
+      {
+        "type": "ACTIVITY",
+        "text": "\"IP Administration\"",
+        "from": 114,
+        "to": 133
+      },
+      {
+        "type": "PRE",
+        "text": "pre",
+        "from": 134,
+        "to": 137
+      },
+      {
+        "type": "COMMA",
+        "text": ",",
+        "from": 137,
+        "to": 138
+      },
+      {
+        "type": "POST",
+        "text": "post",
+        "from": 139,
+        "to": 143
+      },
+      {
+        "type": "DURATION",
+        "text": "1h",
+        "from": 144,
+        "to": 146
+      },
+      {
+        "type": "DURATION",
+        "text": "2h",
+        "from": 147,
+        "to": 149
+      },
+      {
+        "type": "SEP",
+        "text": "\n",
+        "from": 149,
+        "to": 150
+      },
+      {
+        "type": "ACTIVITY",
+        "text": "\"Vital Signs\"",
+        "from": 150,
+        "to": 163
+      },
+      {
+        "type": "COLON",
+        "text": ":",
+        "from": 163,
+        "to": 164
+      },
+      {
+        "type": "SEP",
+        "text": "\n",
+        "from": 164,
+        "to": 165
+      },
+      {
+        "type": "COUNT",
+        "text": "3x",
+        "from": 167,
+        "to": 169
+      },
+      {
+        "type": "BEFORE",
+        "text": "before",
+        "from": 170,
+        "to": 176
+      },
+      {
+        "type": "ACTIVITY",
+        "text": "\"PK sampling\"",
+        "from": 177,
+        "to": 190
+      },
+      {
+        "type": "SEP",
+        "text": "\n",
+        "from": 190,
+        "to": 191
+      },
+      {
+        "type": "STATE",
+        "text": "wait",
+        "from": 193,
+        "to": 197
+      },
+      {
+        "type": "DURATION",
+        "text": "5m",
+        "from": 198,
+        "to": 200
+      },
+      {
+        "type": "BEFORE",
+        "text": "before",
+        "from": 201,
+        "to": 207
+      },
+      {
+        "type": "SEP",
+        "text": "\n",
+        "from": 207,
+        "to": 208
+      },
+      {
+        "type": "ACTIVITY",
+        "text": "\"12-lead ECG\"",
+        "from": 208,
+        "to": 221
+      },
+      {
+        "type": "COLON",
+        "text": ":",
+        "from": 221,
+        "to": 222
+      },
+      {
+        "type": "SEP",
+        "text": "\n",
+        "from": 222,
+        "to": 223
+      },
+      {
+        "type": "AFTER",
+        "text": "after",
+        "from": 225,
+        "to": 230
+      },
+      {
+        "type": "ACTIVITY",
+        "text": "\"Vital Signs\"",
+        "from": 231,
+        "to": 244
+      }
+    ],
+    "parse": {
+      "version": 1,
+      "mode": "rules",
+      "commands": [
+        {
+          "id": "c1",
+          "subject": "IP Administration",
+          "type": "fasting-wait",
+          "state": "fast",
+          "duration": 480,
+          "position": "before",
+          "source": {
+            "from": 23,
+            "to": 37
+          }
+        },
+        {
+          "id": "c2",
+          "subject": "IP Administration",
+          "type": "fasting-wait",
+          "state": "wait",
+          "duration": 30,
+          "position": "after",
+          "source": {
+            "from": 40,
+            "to": 54
+          }
+        },
+        {
+          "id": "c3",
+          "subject": "IP Administration",
+          "type": "hospitalization",
+          "duration": 360,
+          "from": {
+            "kind": "activity",
+            "name": "IP Administration"
+          },
+          "source": {
+            "from": 57,
+            "to": 89
+          }
+        },
+        {
+          "id": "c4",
+          "subject": "PK sampling",
+          "type": "composite",
+          "count": 3,
+          "anchor": {
+            "kind": "activity",
+            "name": "IP Administration"
+          },
+          "edge": "start",
+          "occurrence": "each",
+          "offsets": [
+            {
+              "kind": "pre"
+            },
+            {
+              "kind": "post",
+              "after": 60,
+              "window": null
+            },
+            {
+              "kind": "post",
+              "after": 120,
+              "window": null
+            }
+          ],
+          "source": {
+            "from": 107,
+            "to": 149
+          }
+        },
+        {
+          "id": "c5",
+          "subject": "Vital Signs",
+          "type": "dependency",
+          "count": 3,
+          "direction": "before",
+          "targets": [
+            "PK sampling"
+          ],
+          "source": {
+            "from": 167,
+            "to": 190
+          }
+        },
+        {
+          "id": "c6",
+          "subject": "Vital Signs",
+          "type": "fasting-wait",
+          "state": "wait",
+          "duration": 5,
+          "position": "before",
+          "source": {
+            "from": 193,
+            "to": 207
+          }
+        },
+        {
+          "id": "c7",
+          "subject": "12-lead ECG",
+          "type": "dependency",
+          "count": null,
+          "direction": "after",
+          "targets": [
+            "Vital Signs"
+          ],
+          "source": {
+            "from": 225,
+            "to": 244
+          }
+        }
+      ],
+      "diagnostics": []
+    },
+    "config": {
+      "activities": {
+        "Vital Signs": {
+          "duration": 15
+        },
+        "12-lead ECG": {
+          "duration": 8
+        },
+        "PK sampling": {
+          "duration": 5
+        },
+        "IP Administration": {
+          "duration": 1
+        }
+      },
+      "cdtOrder": [
+        "Vital Signs",
+        "12-lead ECG",
+        "PK sampling",
+        "IP Administration"
+      ]
+    }
   }
 ]

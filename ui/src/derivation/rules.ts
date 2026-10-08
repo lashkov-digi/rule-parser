@@ -1,4 +1,4 @@
-import { block, type Draft } from './block.ts';
+import { block, type Block, type Draft } from './block.ts';
 import type { Command, DayConfig, Diagnostic, Flag, Item, Minutes, RuleCommand, Span } from './types.ts';
 
 // One occurrence of an activity on the day, e.g. the 2nd PK sampling.
@@ -7,6 +7,8 @@ type Occurrence = {
   n: number; // 0-based
   duration: Minutes;
   start: Minutes | null; // set once placed; fixed occurrences get it from an offset
+  before: Minutes; // explicit waits right before it; nothing else is placed there
+  after: Minutes; // explicit waits right after it
   fixed: boolean;
   isAnchor: boolean;
   window: Item['window'];
@@ -20,13 +22,15 @@ type Edge = { first: Occurrence; second: Occurrence };
 const END = 'end'; // slot for occurrences that no fixed occurrence bounds; they run after everything else
 
 /*
- * Rules mode, POC scope: count, dependency and composite. Placement:
+ * Rules mode, POC scope: count, dependency, composite, fasting-wait and hospitalization. Placement:
  * 1. Composite offsets fix occurrences relative to the anchor (T 0 = anchor start).
  * 2. Every other occurrence is floating. It joins the "slot" of the fixed occurrence it must run before,
  *    directly or through a chain of dependencies. With no such bound it runs after everything.
  * 3. A slot runs as early as possible after the previous fixed occurrence. The first slot of an
  *    activity-anchored day has nothing before it, so it packs right up against its fixed occurrence;
  *    that is where the day starts.
+ * An explicit wait sticks to every occurrence of its subject and blocks its time, like a slot in a legacy day.
+ * A fast and a hospitalization run alongside the activities and block nothing.
  * finish() then turns the idle time between blocks into derived waits.
  */
 export function deriveRules(commands: Command[], config: DayConfig): Draft {
@@ -37,7 +41,7 @@ export function deriveRules(commands: Command[], config: DayConfig): Draft {
   const rules: RuleCommand[] = [];
   for (const command of commands) {
     if (command.type === 'slot') report(command.source, 'error', 'A sequence slot cannot appear in rules mode');
-    else if (command.type === 'count' || command.type === 'dependency' || command.type === 'composite') rules.push(command);
+    else if (command.type !== 'spacing' && command.type !== 'travel') rules.push(command);
     else report(command.source, 'warning', `The POC derivation does not support ${command.type} rules yet`);
   }
 
@@ -47,6 +51,7 @@ export function deriveRules(commands: Command[], config: DayConfig): Draft {
     names.add(rule.subject);
     if (rule.type === 'dependency') rule.targets.forEach((target) => names.add(target));
     if (rule.type === 'composite' && rule.anchor.kind === 'activity') names.add(rule.anchor.name);
+    if (rule.type === 'hospitalization' && rule.from.kind === 'activity') names.add(rule.from.name);
   }
   const duration = (name: string, source: Span) => {
     const found = config.activities[name]?.duration;
@@ -82,12 +87,20 @@ export function deriveRules(commands: Command[], config: DayConfig): Draft {
     }
   }
 
+  // Explicit waits, summed per activity and side. Every occurrence carries them.
+  const waits = rules.filter(
+    (rule): rule is Extract<RuleCommand, { type: 'fasting-wait' }> => rule.type === 'fasting-wait' && rule.state === 'wait',
+  );
+  const waiting = (name: string, position: 'before' | 'after') =>
+    waits.filter((rule) => rule.subject === name && rule.position === position).reduce((sum, rule) => sum + rule.duration, 0);
+
   // Occurrences.
   const sourceOf = (name: string) => rules.find((rule) => rule.subject === name)?.source ?? rules[0].source;
   const occurrences = new Map<string, Occurrence[]>();
   for (const name of names) {
     const each = duration(name, sourceOf(name));
     const commandIds = rules
+      .filter((rule) => rule.type === 'count' || rule.type === 'dependency' || rule.type === 'composite')
       .filter((rule) => rule.subject === name || (rule.type === 'composite' && rule.anchor.kind === 'activity' && rule.anchor.name === name))
       .map((rule) => rule.id);
     occurrences.set(
@@ -97,6 +110,8 @@ export function deriveRules(commands: Command[], config: DayConfig): Draft {
         n,
         duration: each,
         start: null,
+        before: waiting(name, 'before'),
+        after: waiting(name, 'after'),
         fixed: false,
         isAnchor: false,
         window: null,
@@ -132,7 +147,8 @@ export function deriveRules(commands: Command[], config: DayConfig): Draft {
     // A post offset counts only the time in between: neither the anchor nor the subject's earlier
     // post occurrences use up the offset. "post 1h 2h" after a 1 min IP with 5 min PK draws puts the
     // draws at IP end + 60 and IP end + 120 + 5, so each hour between draws is a full hour.
-    const anchorDuration = rule.anchor.kind === 'activity' ? of(rule.anchor.name)[0].duration : 0;
+    const anchored = rule.anchor.kind === 'activity' ? of(rule.anchor.name)[0] : null;
+    const anchorDuration = anchored?.duration ?? 0;
     let excluded = anchorDuration;
     let previousAfter = -1;
     rule.offsets.forEach((offset, i) => {
@@ -140,7 +156,8 @@ export function deriveRules(commands: Command[], config: DayConfig): Draft {
       occurrence.fixed = true;
       if (offset.kind === 'pre') {
         if (rule.anchor.kind === 'day') report(rule.source, 'error', '`pre` needs an activity anchor');
-        occurrence.start = -occurrence.duration;
+        // Right before the anchor, with both waits in between kept clear.
+        occurrence.start = -(anchored?.before ?? 0) - occurrence.after - occurrence.duration;
         return;
       }
       if (offset.after <= previousAfter) report(rule.source, 'warning', 'Post offsets should go from shortest to longest');
@@ -175,7 +192,7 @@ export function deriveRules(commands: Command[], config: DayConfig): Draft {
   const fixed = all.filter((occurrence) => occurrence.fixed).sort((a, b) => a.start! - b.start!);
   type Slot = Occurrence | typeof END;
   const nextFixedAfter = (occurrence: Occurrence): Slot =>
-    fixed.find((candidate) => candidate.start! >= occurrence.start! + occurrence.duration) ?? END;
+    fixed.find((candidate) => candidate.start! - candidate.before >= occurrence.start! + occurrence.duration + occurrence.after) ?? END;
   const timeOf = (slot: Slot) => (slot === END ? Infinity : slot.start!);
   const earliest = (candidates: Slot[]) => candidates.reduce<Slot>((best, slot) => (timeOf(slot) < timeOf(best) ? slot : best), END);
 
@@ -242,9 +259,9 @@ export function deriveRules(commands: Command[], config: DayConfig): Draft {
     let at = from;
     for (const occurrence of group) {
       const after = edges.filter((edge) => edge.second === occurrence && edge.first.start !== null);
-      at = Math.max(at, ...after.map((edge) => edge.first.start! + edge.first.duration));
-      occurrence.start = at;
-      at += occurrence.duration;
+      at = Math.max(at, ...after.map((edge) => edge.first.start! + edge.first.duration + edge.first.after));
+      occurrence.start = at + occurrence.before;
+      at = occurrence.start + occurrence.duration + occurrence.after;
     }
     return at;
   };
@@ -253,31 +270,62 @@ export function deriveRules(commands: Command[], config: DayConfig): Draft {
   for (const target of [...fixed, END] as const) {
     const group = order(floating.filter((occurrence) => slots.get(occurrence) === target));
     if (group.length > 0) {
-      const total = group.reduce((sum, occurrence) => sum + occurrence.duration, 0);
-      const end = pack(group, cursor === -Infinity ? (target === END ? 0 : target.start!) - total : cursor);
-      if (target !== END && end > target.start!) {
+      const total = group.reduce((sum, occurrence) => sum + occurrence.before + occurrence.duration + occurrence.after, 0);
+      const deadline = target === END ? 0 : target.start! - target.before;
+      const end = pack(group, cursor === -Infinity ? deadline - total : cursor);
+      if (target !== END && end > deadline) {
         report(sourceOf(group[0].activity), 'warning', `Not enough time before ${target.activity} ${target.n + 1}`);
         group.forEach((occurrence) => occurrence.flags.push('overlap'));
       }
       cursor = Math.max(cursor, end);
     }
-    if (target !== END) cursor = Math.max(cursor, target.start! + target.duration);
+    if (target !== END) cursor = Math.max(cursor, target.start! + target.duration + target.after);
   }
 
-  return {
-    blocks: all.map((occurrence) =>
-      block({
-        kind: 'activity',
-        activities: [occurrence.activity],
-        start: occurrence.start!,
-        duration: occurrence.duration,
-        isAnchor: occurrence.isAnchor,
-        window: occurrence.window,
-        commandIds: occurrence.commandIds,
-        flags: occurrence.flags,
-      }),
-    ),
-    anchorAt,
-    diagnostics,
-  };
+  // Activities, then the waits and fasts around every occurrence of their subject.
+  const blocks: Block[] = all.map((occurrence) =>
+    block({
+      kind: 'activity',
+      activities: [occurrence.activity],
+      start: occurrence.start!,
+      duration: occurrence.duration,
+      isAnchor: occurrence.isAnchor,
+      window: occurrence.window,
+      commandIds: occurrence.commandIds,
+      flags: occurrence.flags,
+    }),
+  );
+  // Several waits on one side stack outwards in written order; a fast ends where the activity starts, or starts where it ends.
+  const stacked = new Map<Occurrence, { before: Minutes; after: Minutes }>();
+  for (const rule of rules) {
+    if (rule.type !== 'fasting-wait') continue;
+    for (const occurrence of of(rule.subject)) {
+      const start = occurrence.start!;
+      const end = start + occurrence.duration;
+      let at: Minutes;
+      if (rule.state === 'fast') at = rule.position === 'before' ? start - rule.duration : end;
+      else {
+        const used = stacked.get(occurrence) ?? { before: 0, after: 0 };
+        at = rule.position === 'before' ? start - used.before - rule.duration : end + used.after;
+        used[rule.position] += rule.duration;
+        stacked.set(occurrence, used);
+      }
+      blocks.push(block({ kind: rule.state, start: at, duration: rule.duration, commandIds: [rule.id] }));
+    }
+  }
+
+  // Hospitalization: from the first occurrence of its activity, or from the start of the day.
+  const busy = blocks.filter((b) => b.kind === 'activity' || b.kind === 'wait');
+  const dayStart = busy.length > 0 ? Math.min(...busy.map((b) => b.start)) : 0;
+  for (const rule of rules) {
+    if (rule.type !== 'hospitalization') continue;
+    if (rule.from.kind === 'day' && rule.from.at === 'day-end') {
+      report(rule.source, 'warning', 'A hospitalization cannot start at day-end');
+      continue;
+    }
+    const start = rule.from.kind === 'activity' ? of(rule.from.name)[0].start! : dayStart;
+    blocks.push(block({ kind: 'hospitalization', start, duration: rule.duration, commandIds: [rule.id] }));
+  }
+
+  return { blocks, anchorAt, diagnostics };
 }

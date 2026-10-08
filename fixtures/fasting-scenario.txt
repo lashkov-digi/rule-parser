@@ -1,0 +1,11 @@
+"IP Administration":
+  fast 8h before
+  wait 30m after
+  hosp 6h from "IP Administration"
+"PK sampling":
+  3x rel "IP Administration" pre, post 1h 2h
+"Vital Signs":
+  3x before "PK sampling"
+  wait 5m before
+"12-lead ECG":
+  after "Vital Signs"

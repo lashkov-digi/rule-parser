@@ -1,0 +1,400 @@
+{
+  "version": 1,
+  "anchorAt": 33,
+  "items": [
+    {
+      "id": "i1",
+      "kind": "fast",
+      "activities": [],
+      "occurrence": null,
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": -447
+      },
+      "duration": 480,
+      "gap": null,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [
+        "c1"
+      ],
+      "flags": []
+    },
+    {
+      "id": "i2",
+      "kind": "wait",
+      "activities": [],
+      "occurrence": null,
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 0
+      },
+      "duration": 5,
+      "gap": null,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [
+        "c6"
+      ],
+      "flags": []
+    },
+    {
+      "id": "i3",
+      "kind": "activity",
+      "activities": [
+        "Vital Signs"
+      ],
+      "occurrence": {
+        "n": 1,
+        "of": 3
+      },
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 5
+      },
+      "duration": 15,
+      "gap": 0,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [
+        "c5"
+      ],
+      "flags": []
+    },
+    {
+      "id": "i4",
+      "kind": "activity",
+      "activities": [
+        "12-lead ECG"
+      ],
+      "occurrence": {
+        "n": 1,
+        "of": 3
+      },
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 20
+      },
+      "duration": 8,
+      "gap": 0,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [
+        "c7"
+      ],
+      "flags": []
+    },
+    {
+      "id": "i5",
+      "kind": "activity",
+      "activities": [
+        "PK sampling"
+      ],
+      "occurrence": {
+        "n": 1,
+        "of": 3
+      },
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 28
+      },
+      "duration": 5,
+      "gap": 0,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [
+        "c4"
+      ],
+      "flags": []
+    },
+    {
+      "id": "i6",
+      "kind": "activity",
+      "activities": [
+        "IP Administration"
+      ],
+      "occurrence": null,
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 33
+      },
+      "duration": 1,
+      "gap": 0,
+      "isAnchor": true,
+      "window": null,
+      "commandIds": [
+        "c4"
+      ],
+      "flags": []
+    },
+    {
+      "id": "i7",
+      "kind": "hospitalization",
+      "activities": [],
+      "occurrence": null,
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 33
+      },
+      "duration": 360,
+      "gap": null,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [
+        "c3"
+      ],
+      "flags": []
+    },
+    {
+      "id": "i8",
+      "kind": "wait",
+      "activities": [],
+      "occurrence": null,
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 34
+      },
+      "duration": 30,
+      "gap": null,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [
+        "c2"
+      ],
+      "flags": []
+    },
+    {
+      "id": "i9",
+      "kind": "wait",
+      "activities": [],
+      "occurrence": null,
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 64
+      },
+      "duration": 5,
+      "gap": null,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [
+        "c6"
+      ],
+      "flags": []
+    },
+    {
+      "id": "i10",
+      "kind": "activity",
+      "activities": [
+        "Vital Signs"
+      ],
+      "occurrence": {
+        "n": 2,
+        "of": 3
+      },
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 69
+      },
+      "duration": 15,
+      "gap": 0,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [
+        "c5"
+      ],
+      "flags": []
+    },
+    {
+      "id": "i11",
+      "kind": "activity",
+      "activities": [
+        "12-lead ECG"
+      ],
+      "occurrence": {
+        "n": 2,
+        "of": 3
+      },
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 84
+      },
+      "duration": 8,
+      "gap": 0,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [
+        "c7"
+      ],
+      "flags": []
+    },
+    {
+      "id": "i12",
+      "kind": "wait",
+      "activities": [],
+      "occurrence": null,
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 92
+      },
+      "duration": 2,
+      "gap": null,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [],
+      "flags": [
+        "derived-wait"
+      ]
+    },
+    {
+      "id": "i13",
+      "kind": "activity",
+      "activities": [
+        "PK sampling"
+      ],
+      "occurrence": {
+        "n": 2,
+        "of": 3
+      },
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 94
+      },
+      "duration": 5,
+      "gap": 0,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [
+        "c4"
+      ],
+      "flags": []
+    },
+    {
+      "id": "i14",
+      "kind": "wait",
+      "activities": [],
+      "occurrence": null,
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 99
+      },
+      "duration": 5,
+      "gap": null,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [
+        "c6"
+      ],
+      "flags": []
+    },
+    {
+      "id": "i15",
+      "kind": "activity",
+      "activities": [
+        "Vital Signs"
+      ],
+      "occurrence": {
+        "n": 3,
+        "of": 3
+      },
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 104
+      },
+      "duration": 15,
+      "gap": 0,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [
+        "c5"
+      ],
+      "flags": []
+    },
+    {
+      "id": "i16",
+      "kind": "activity",
+      "activities": [
+        "12-lead ECG"
+      ],
+      "occurrence": {
+        "n": 3,
+        "of": 3
+      },
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 119
+      },
+      "duration": 8,
+      "gap": 0,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [
+        "c7"
+      ],
+      "flags": []
+    },
+    {
+      "id": "i17",
+      "kind": "wait",
+      "activities": [],
+      "occurrence": null,
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 127
+      },
+      "duration": 32,
+      "gap": null,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [],
+      "flags": [
+        "derived-wait"
+      ]
+    },
+    {
+      "id": "i18",
+      "kind": "activity",
+      "activities": [
+        "PK sampling"
+      ],
+      "occurrence": {
+        "n": 3,
+        "of": 3
+      },
+      "together": null,
+      "placement": {
+        "kind": "fixed",
+        "start": 159
+      },
+      "duration": 5,
+      "gap": 0,
+      "isAnchor": false,
+      "window": null,
+      "commandIds": [
+        "c4"
+      ],
+      "flags": []
+    }
+  ],
+  "summary": {
+    "onSite": 393,
+    "withTravel": 393
+  },
+  "diagnostics": []
+}

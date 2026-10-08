@@ -178,7 +178,7 @@ type TimelineResult = {
 type Item = {
   id: string;                  // i1, i2, ...
   kind: 'activity' | 'wait' | 'fast' | 'travel' | 'hospitalization';
-  activities: string[];        // several names when they share a slot; empty for wait, fast and travel
+  activities: string[];        // several names when they share a slot; empty for wait, fast, travel and hospitalization
   occurrence: { n: number; of: number } | null;  // "2 of 4"
   together: string | null;     // why activities share one slot, e.g. "same sample type"
   placement:
@@ -197,10 +197,11 @@ type Item = {
 - **`derived-wait`** marks a wait that no command asked for, such as the idle time between PK draws. Derived waits are output only (see `lexemes.md`, semantics decisions).
 - **`unpaired`** marks an occurrence that had no partner in a dependency and fell back to CDT order.
 - **`overlap`** marks an item that overlaps another one on the same subject. Derivation reports it and does not fix it.
-- **Hospitalization** is an item too. The UI draws it as a background band, not as a bar.
+- **Fasting and waits** become `fast` and `wait` items around every occurrence of their subject. A fast runs alongside other items; an explicit wait blocks its time, so nothing else is placed inside it.
+- **Hospitalization** is an item too. It starts at the first occurrence of its activity, or at arrival on site, and counts as on-site time. The UI draws it as a background band, not as a bar.
 - **Sequence mode** maps one slot to one item, in order, with `start` as the running sum.
 
-The POC derivation supports count, dependency and composite in rules mode, plus all of sequence mode. Other rules return a `semantic` warning instead of items.
+The POC derivation supports count, dependency, composite, fasting-wait and hospitalization in rules mode, plus all of sequence mode. Other rules return a `semantic` warning instead of items.
 
 ## UI components
 
@@ -222,9 +223,10 @@ The UI is built by hand and is out of scope for the parser task. This section on
 | --- | --- | --- |
 | `fixtures/product-scenario.txt` | `product-scenario.parse.json`, `product-scenario.items.json` | Rules mode, headers, newline separators, composite with pre and post, dependency with and without count, derived waits. |
 | `fixtures/anchor-scenario.txt` | `anchor-scenario.parse.json`, `anchor-scenario.items.json` | The product scenario written anchor-first. Same commands and items as `product-scenario`; only the spans differ. |
+| `fixtures/fasting-scenario.txt` | `fasting-scenario.parse.json`, `fasting-scenario.items.json` | The product scenario plus a fast and an observation wait around IP Administration, a rest before every Vital Signs, and a hospitalization from IP Administration. |
 | `fixtures/legacy-day.txt` | `legacy-day.parse.json`, `legacy-day.items.json` | Sequence mode, and the items for a literal day. |
 | `fixtures/typo-error.txt` | `typo-error.parse.json` | A lexer error with its span and the expected tokens. |
-| `fixtures/scenarios.json` | the same file | The product scenario (subject-first and anchor-first) and the full legacy day: text, tokens, parse result and config. The UI reads it and runs `derive()`. |
+| `fixtures/scenarios.json` | the same file | The product scenario (subject-first and anchor-first), the full legacy day and the fasting scenario: text, tokens, parse result and config. The UI reads it and runs `derive()`. |
 
 The `Examples` table in `lexemes.md` (and `examples` in `lexemes.json`) is the token-level fixture set for `tokenize`.
 
