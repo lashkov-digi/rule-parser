@@ -32,14 +32,14 @@ const inputs = [
 if (parsers.length === 0) test.todo('no parser registered in src/parsers/registry.ts');
 
 // One comparison table per input and step. Tokenize and parse are timed apart, since a library can be fast at one
-// and slow at the other.
+// and slow at the other. `bench.compare` needs two libraries, so a lone one runs on its own.
 for (const input of parsers.length > 0 ? inputs : []) {
   describe(input.title, () => {
-    test('tokenize', async ({ bench }) => {
-      await bench.compare(...parsers.map((parser) => bench(parser.title, () => void parser.tokenize(input.text))), RUN);
-    });
-    test('parse', async ({ bench }) => {
-      await bench.compare(...parsers.map((parser) => bench(parser.title, () => void parser.parse(input.text))), RUN);
-    });
+    for (const step of ['tokenize', 'parse'] as const) {
+      test(step, async ({ bench }) => {
+        const runs = parsers.map((parser) => bench(parser.title, () => void parser[step](input.text)));
+        await (runs.length === 1 ? runs[0].run(RUN) : bench.compare(...runs, RUN));
+      });
+    }
   });
 }
