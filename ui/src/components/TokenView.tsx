@@ -9,17 +9,20 @@ const dictionary = new Map(lexemes.tokens.map((token) => [token.name, token as {
 const shown = (text: string) => (text === '\n' || text === '\r\n' ? '↵' : text);
 
 // The DSL text with each token's characters marked, and the token chips under it. Hovering either side highlights both.
-// The hovered token index lives with the caller, so the timeline can light up the rows it belongs to.
+// The hovered token index lives with the caller, so the timeline can light up the rows it belongs to. `linked` holds the
+// token indexes behind the hovered timeline row.
 export function TokenView({
   text,
   tokens,
   active,
   setActive,
+  linked,
 }: {
   text: string;
   tokens: Token[];
   active: number | null;
   setActive: (index: number | null) => void;
+  linked: Set<number>;
 }) {
 
   const segments: Array<{ text: string; index: number | null }> = [];
@@ -31,6 +34,7 @@ export function TokenView({
   });
   if (at < text.length) segments.push({ text: text.slice(at), index: null });
 
+  const state = (index: number) => (index === active ? ' active' : linked.has(index) ? ' linked' : '');
   const kindOf = (index: number) => dictionary.get(tokens[index].type)?.kind ?? 'literal';
 
   return (
@@ -44,7 +48,7 @@ export function TokenView({
             ) : (
               <span
                 key={i}
-                className={`lexeme kind-${kindOf(segment.index)}${segment.index === active ? ' active' : ''}`}
+                className={`lexeme kind-${kindOf(segment.index)}${state(segment.index)}`}
                 onMouseEnter={() => setActive(segment.index)}
                 onMouseLeave={() => setActive(null)}
               >
@@ -62,7 +66,7 @@ export function TokenView({
             <span
               key={index}
               style={{ '--i': index } as CSSProperties}
-              className={`token kind-${kindOf(index)}${index === active ? ' active' : ''}`}
+              className={`token kind-${kindOf(index)}${state(index)}`}
               onMouseEnter={() => setActive(index)}
               onMouseLeave={() => setActive(null)}
             >

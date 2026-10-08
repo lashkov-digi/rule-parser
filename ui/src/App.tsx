@@ -86,6 +86,21 @@ export function App() {
     );
     return new Set(timeline.items.filter((item) => item.commandIds.some((id) => commandIds.has(id))).map((item) => item.id));
   }, [activeToken, result, timeline]);
+  // The other direction: the hovered timeline row lights up the tokens behind it. Those are the mentions of its
+  // activities and every token of the commands that placed it.
+  const [activeItem, setActiveItem] = useState<string | null>(null);
+  const linkedTokens = useMemo(() => {
+    const item = timeline?.items.find((candidate) => candidate.id === activeItem);
+    if (!item || !result.parse) return new Set<number>();
+    const sources = result.parse.commands.filter((command) => item.commandIds.includes(command.id)).map((command) => command.source);
+    return new Set(
+      result.tokens.flatMap((token, index) => {
+        const named = token.type === 'ACTIVITY' && item.activities.includes(token.text.slice(1, -1));
+        const inside = sources.some((source) => source.from <= token.from && token.to <= source.to);
+        return named || inside ? [index] : [];
+      }),
+    );
+  }, [activeItem, result, timeline]);
   const diagnostics = [...(result.parse?.diagnostics ?? []), ...(timeline?.diagnostics ?? [])];
 
   // A new pick during a fade restarts the timer, so the last choice always wins.
@@ -127,7 +142,7 @@ export function App() {
         <main className="panel">
           <section>
             <h2>Timeline</h2>
-            {timeline ? <ItemsTable timeline={timeline} linked={linked} /> : <p className="parser-error">{result.error}</p>}
+            {timeline ? <ItemsTable timeline={timeline} linked={linked} setActive={setActiveItem} /> : <p className="parser-error">{result.error}</p>}
           </section>
         </main>
 
@@ -150,7 +165,13 @@ export function App() {
             />
             <DiagnosticList diagnostics={diagnostics} />
           </section>
-          <TokenView text={shownText} tokens={result.tokens} active={activeToken} setActive={setActiveToken} />
+          <TokenView
+            text={shownText}
+            tokens={result.tokens}
+            active={activeToken}
+            setActive={setActiveToken}
+            linked={linkedTokens}
+          />
           {result.parse?.mode === 'rules' && (
             <CatalogEditor
               catalog={config.activities}

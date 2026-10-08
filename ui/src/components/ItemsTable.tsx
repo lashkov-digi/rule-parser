@@ -68,8 +68,17 @@ function Activity({ item }: { item: Item }) {
   );
 }
 
-// `linked` holds the ids of the rows behind the hovered token.
-export function ItemsTable({ timeline, linked }: { timeline: TimelineResult; linked: Set<string> }) {
+// `linked` holds the ids of the rows behind the hovered token. Hovering a row reports its id, so the lexemes behind it
+// light up in turn.
+export function ItemsTable({
+  timeline,
+  linked,
+  setActive,
+}: {
+  timeline: TimelineResult;
+  linked: Set<string>;
+  setActive: (id: string | null) => void;
+}) {
   return (
     <table className="items">
       <thead>
@@ -86,6 +95,8 @@ export function ItemsTable({ timeline, linked }: { timeline: TimelineResult; lin
             key={item.id}
             className={[item.isAnchor && 'row-anchor', linked.has(item.id) && 'row-linked'].filter(Boolean).join(' ') || undefined}
             style={{ '--i': i } as CSSProperties}
+            onMouseEnter={() => setActive(item.id)}
+            onMouseLeave={() => setActive(null)}
           >
             <td>
               <At item={item} anchorAt={timeline.anchorAt} />
