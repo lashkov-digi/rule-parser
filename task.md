@@ -15,7 +15,7 @@ Find out which open-source lexer/parser library fits the rule DSL best. For each
 1. `tokenize(text)`, returning the token sequences in the `lexemes.md` Examples table.
 2. `parse(text)`, returning `ParseResult` that matches every `fixtures/*.parse.json` (`message` excluded), for both modes.
 3. The adapter registered in `ui/src/parsers/registry.ts`, so the shared conformance test runs the Examples table and the fixtures against it.
-4. A short write-up scored on the criteria below.
+4. A column in `comparison.md`, scored on the criteria below. For each criterion, say whether the library does the work or the adapter does it around the library.
 
 The printer and the derivation are not part of this task. Derivation already exists in `ui/src/derivation/` and reads your `ParseResult`, so you can check a parser end to end by passing its output to `derive()`.
 
@@ -30,18 +30,20 @@ Each library lives in its own folder under `ui/src/parsers/` and implements `Rul
 5. Run `npm run test:parsers` in `ui/`. `ui/src/parsers/conformance.test.ts` runs the same checks for every registered library: token types for each Examples row, exact tokens for each scenario in `fixtures/scenarios.json`, and every `fixtures/*.parse.json` with `message` left out.
 6. Run `npm run bench` in `ui/`. `ui/src/parsers/parsers.bench.ts` times `tokenize` and `parse` separately for every registered library, on each scenario and on generated 200-line rules and sequence texts, and prints one comparison table per input and step. Compare libraries within one run only; timings drift between runs.
 7. Run `npm run dev` in `ui/` and pick the library in the Parser picker. The input becomes editable, and the timeline and diagnostics follow the library's output. "Hand-written fixtures" shows the stand-in data for comparison, with the input disabled.
+8. Add a column for the library to `comparison.md`. Mark each row as done by the library, by the adapter, or by both.
 
 Library-specific tests or benchmarks go in the library's own folder.
 
 ## Evaluation criteria
 
-- **Error quality:** are spans exact? Does the library report which tokens it expected at an error (`Diagnostic.expected`)? Does it recover and keep parsing after the first error?
+- **Error quality:** are spans exact? Does the library report which tokens it expected at an error (`Diagnostic.expected`)? Does it recover and keep parsing after the first error, or does the adapter recover by feeding it one line at a time?
 - **Adding a rule:** how many places change to add a new statement type? Try one: a made-up `repeat 2x` statement, then remove it.
-- **Two modes:** how cleanly does it switch between the rules grammar and the sequence grammar after the first token?
+- **Two modes:** how cleanly does it switch between the rules grammar and the sequence grammar after the first token? Does the grammar decide, or does the adapter pick a start rule?
+- **Adapter share:** what our code does that the library does not, such as splitting lines, tracking header blocks, recovering from errors and switching modes. It is code we maintain, and it hides how the library itself behaves.
 - **Types:** does it produce TypeScript types, or do we write them by hand?
 - **Runtime:** bundle size in the browser, parse time for a 200-line text (`npm run bench`), and maintenance activity of the project.
 - **Editor support:** can the same grammar drive completion and highlighting in the `RuleEditor`?
 
 ## Out of scope
 
-The printer, timeline derivation, UI, and choosing the final library. The write-ups feed that decision.
+The printer, timeline derivation, UI, and choosing the final library. `comparison.md` feeds that decision.
