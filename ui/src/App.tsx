@@ -67,6 +67,25 @@ export function App() {
   };
   // Activity names in the text, in written order. Sequence mode writes durations in the text and has no catalog.
   const mentioned = [...new Set(result.tokens.filter((token) => token.type === 'ACTIVITY').map((token) => token.text.slice(1, -1)))];
+  // The hovered token, by index into result.tokens. An edit can leave it past the end, so every read checks.
+  const [activeToken, setActiveToken] = useState<number | null>(null);
+  // Timeline rows behind the hovered token. An activity name picks the rows of that activity, wherever it is
+  // written: in `after "Vital Signs"` it means Vital Signs, not the subject the rule places. Any other token picks
+  // the rows placed by the command whose source holds it.
+  const linked = useMemo(() => {
+    const token = activeToken === null ? undefined : result.tokens[activeToken];
+    if (!token || !timeline || !result.parse) return new Set<string>();
+    if (token.type === 'ACTIVITY') {
+      const name = token.text.slice(1, -1);
+      return new Set(timeline.items.filter((item) => item.activities.includes(name)).map((item) => item.id));
+    }
+    const commandIds = new Set(
+      result.parse.commands
+        .filter((command) => command.source.from <= token.from && token.to <= command.source.to)
+        .map((command) => command.id),
+    );
+    return new Set(timeline.items.filter((item) => item.commandIds.some((id) => commandIds.has(id))).map((item) => item.id));
+  }, [activeToken, result, timeline]);
   const diagnostics = [...(result.parse?.diagnostics ?? []), ...(timeline?.diagnostics ?? [])];
 
   // A new pick during a fade restarts the timer, so the last choice always wins.
@@ -108,7 +127,7 @@ export function App() {
         <main className="panel">
           <section>
             <h2>Timeline</h2>
-            {timeline ? <ItemsTable timeline={timeline} /> : <p className="parser-error">{result.error}</p>}
+            {timeline ? <ItemsTable timeline={timeline} linked={linked} /> : <p className="parser-error">{result.error}</p>}
           </section>
         </main>
 
@@ -131,7 +150,7 @@ export function App() {
             />
             <DiagnosticList diagnostics={diagnostics} />
           </section>
-          <TokenView text={shownText} tokens={result.tokens} />
+          <TokenView text={shownText} tokens={result.tokens} active={activeToken} setActive={setActiveToken} />
           {result.parse?.mode === 'rules' && (
             <CatalogEditor
               catalog={config.activities}

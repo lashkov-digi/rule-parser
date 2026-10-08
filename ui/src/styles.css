@@ -578,6 +578,15 @@ details[open] .code {
   background: var(--accent-soft);
 }
 
+/* A row behind the hovered token. The bar keeps it apart from the anchor row, which is tinted already. */
+.items tbody tr.row-linked {
+  background: var(--surface-sunken);
+}
+
+.items tbody tr.row-linked td:first-child {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
 .anchor {
   color: var(--accent);
   font-weight: 700;

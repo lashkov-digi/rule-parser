@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react';
+import type { CSSProperties } from 'react';
 import lexemes from '../../../lexemes.json';
 import type { Token } from '../timeline';
 
@@ -9,8 +9,18 @@ const dictionary = new Map(lexemes.tokens.map((token) => [token.name, token as {
 const shown = (text: string) => (text === '\n' || text === '\r\n' ? '↵' : text);
 
 // The DSL text with each token's characters marked, and the token chips under it. Hovering either side highlights both.
-export function TokenView({ text, tokens }: { text: string; tokens: Token[] }) {
-  const [active, setActive] = useState<number | null>(null);
+// The hovered token index lives with the caller, so the timeline can light up the rows it belongs to.
+export function TokenView({
+  text,
+  tokens,
+  active,
+  setActive,
+}: {
+  text: string;
+  tokens: Token[];
+  active: number | null;
+  setActive: (index: number | null) => void;
+}) {
 
   const segments: Array<{ text: string; index: number | null }> = [];
   let at = 0;
@@ -63,7 +73,7 @@ export function TokenView({ text, tokens }: { text: string; tokens: Token[] }) {
         </div>
         {/* Always rendered with a fixed height, so hovering never moves the content below. */}
         <p className="token-info">
-          {active === null ? (
+          {active === null || !tokens[active] ? (
             <span className="muted">Hover a token to see what it means.</span>
           ) : (
             <span key={active} className="token-info-text">

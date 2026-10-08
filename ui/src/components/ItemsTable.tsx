@@ -68,7 +68,8 @@ function Activity({ item }: { item: Item }) {
   );
 }
 
-export function ItemsTable({ timeline }: { timeline: TimelineResult }) {
+// `linked` holds the ids of the rows behind the hovered token.
+export function ItemsTable({ timeline, linked }: { timeline: TimelineResult; linked: Set<string> }) {
   return (
     <table className="items">
       <thead>
@@ -81,7 +82,11 @@ export function ItemsTable({ timeline }: { timeline: TimelineResult }) {
       </thead>
       <tbody>
         {timeline.items.map((item, i) => (
-          <tr key={item.id} className={item.isAnchor ? 'row-anchor' : undefined} style={{ '--i': i } as CSSProperties}>
+          <tr
+            key={item.id}
+            className={[item.isAnchor && 'row-anchor', linked.has(item.id) && 'row-linked'].filter(Boolean).join(' ') || undefined}
+            style={{ '--i': i } as CSSProperties}
+          >
             <td>
               <At item={item} anchorAt={timeline.anchorAt} />
             </td>
