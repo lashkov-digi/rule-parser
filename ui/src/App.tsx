@@ -67,10 +67,11 @@ export function App() {
   };
   // Activity names in the text, in written order. Sequence mode writes durations in the text and has no catalog.
   const mentioned = [...new Set(result.tokens.filter((token) => token.type === 'ACTIVITY').map((token) => token.text.slice(1, -1)))];
-  // Tokens behind each row, by index into result.tokens: every token of the commands that placed it. A derived wait
-  // has no command of its own. It is the gap before a row a composite fixed later, and derivation puts it right before
-  // that row. Offset i of a composite fixes occurrence i + 1 of its subject, so the wait owns the one offset that fixed
-  // that row: `post 1h` for "PK sampling · 2 of 3". Without such an offset it falls back to the row's commands.
+  // Tokens behind each row, by index into result.tokens: every token of the commands that placed it. Offset i of a
+  // composite fixes occurrence i + 1 of its subject, so each offset belongs only to that occurrence: `post 1h` to
+  // "PK sampling · 2 of 3", not to draws 1 and 3. A derived wait has no command of its own. It is the gap before a row
+  // a composite fixed later, and derivation puts it right before that row, so it owns that row's offset alone. Without
+  // such an offset it falls back to the row's commands.
   const rowTokens = useMemo(() => {
     const owned = new Map<string, Set<number>>();
     if (!timeline || !result.parse) return owned;
@@ -110,8 +111,20 @@ export function App() {
         .filter((command) => row.commandIds.includes(command.id) && command.type === 'composite' && row.activities.includes(command.subject))
         .flatMap((command) => offsetGroups(command.source)[n - 1] ?? []);
     };
+    // The row's commands, minus the offsets that fixed other occurrences. Offsets share their `post` keyword, so it
+    // stays while one of the row's own offsets uses it.
+    const ownTokens = (row: (typeof timeline.items)[number]) => {
+      const own = new Set(fixingOffset(row));
+      const others = new Set(
+        commands
+          .filter((command) => row.commandIds.includes(command.id) && command.type === 'composite')
+          .flatMap((command) => offsetGroups(command.source).flat())
+          .filter((index) => !own.has(index)),
+      );
+      return commandTokens(row.commandIds).filter((index) => !others.has(index));
+    };
     timeline.items.forEach((item, index, items) => {
-      if (!item.flags.includes('derived-wait')) return owned.set(item.id, new Set(commandTokens(item.commandIds)));
+      if (!item.flags.includes('derived-wait')) return owned.set(item.id, new Set(ownTokens(item)));
       const next = items[index + 1];
       const offset = fixingOffset(next);
       owned.set(item.id, new Set(offset.length > 0 ? offset : commandTokens(next?.commandIds ?? [])));
