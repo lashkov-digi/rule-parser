@@ -4,6 +4,7 @@ import scenariosJson from '../../fixtures/scenarios.json';
 import { CatalogEditor } from './components/CatalogEditor';
 import { DiagnosticList } from './components/DiagnosticList';
 import { ItemsTable } from './components/ItemsTable';
+import { RuleEditor } from './components/RuleEditor';
 import { TokenView } from './components/TokenView';
 import { createFixtureParser, FIXTURES } from './parsers/fixtures/index.ts';
 import { parsers } from './parsers/registry.ts';
@@ -212,15 +213,7 @@ export function App() {
                 Reset
               </button>
             </div>
-            <textarea
-              className="code input"
-              value={shownText}
-              onChange={(event) => edit(event.target.value)}
-              disabled={!editable}
-              rows={shownText.split('\n').length + 1}
-              spellCheck={false}
-              aria-label="Rule text"
-            />
+            <RuleEditor value={shownText} onChange={edit} readOnly={!editable} />
             <DiagnosticList diagnostics={diagnostics} />
           </section>
           <TokenView

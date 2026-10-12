@@ -203,25 +203,60 @@ h2 {
   cursor: default;
 }
 
+/* The CodeMirror editor. The .code box draws the frame, so the editor inside drops its own padding and outline. */
 .input {
-  display: block;
-  width: 100%;
-  resize: vertical;
-  border: none;
+  padding: 0;
+  overflow: hidden;
   color: var(--text);
 }
 
-.input:focus-visible {
+.input .cm-editor.cm-focused {
   outline: none;
+}
+
+.input .cm-scroller {
+  font: inherit;
+  line-height: inherit;
+}
+
+.input .cm-content {
+  padding: 0.875rem 0;
+}
+
+.input .cm-line {
+  padding: 0 1rem 0 0.5rem;
+}
+
+.input .cm-gutters {
+  color: var(--muted);
+  background: var(--surface-sunken);
+  border-right: 1px solid var(--line);
+}
+
+.input .cm-activeLine {
+  background: var(--accent-soft);
+}
+
+.input .cm-activeLineGutter {
+  color: var(--text);
+  background: var(--accent-soft);
+}
+
+.input:focus-within {
   box-shadow:
     0 0 0 1px var(--accent),
     0 0 0 4px rgb(0 113 227 / 0.18);
 }
 
-.input:disabled {
+.input.is-readonly {
   color: var(--muted);
   background: var(--surface-sunken);
   cursor: not-allowed;
+}
+
+.input.is-readonly .cm-activeLine,
+.input.is-readonly .cm-activeLineGutter {
+  background: none;
 }
 
 .diagnostics-empty {
