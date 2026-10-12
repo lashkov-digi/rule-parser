@@ -1,5 +1,3 @@
-import * as ohm from 'ohm-js';
-
 // The rule DSL as one Ohm grammar. Vocabulary and semantics come from ../../../../lexemes.md.
 //
 // - Lexical rules (lowercase) are the tokens. Each one carries its token name as its description, so a failed
@@ -7,7 +5,6 @@ import * as ohm from 'ohm-js';
 // - Syntactic rules (capitalized) read one statement line at a time: the adapter splits the text at SEP tokens,
 //   so one bad line does not stop the lines after it.
 // - `space` is only spaces and tabs. Newlines are SEP tokens, never whitespace.
-export const grammar = ohm.grammar(String.raw`
 RuleDsl {
   // Entry points for one line in rules mode. LineHeader recovers the header of a line whose statement failed.
   Line = Header Statement?  -- header
@@ -95,4 +92,3 @@ RuleDsl {
   rest = any*
   space := " " | "\t"
 }
-`);

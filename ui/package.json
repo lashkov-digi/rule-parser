@@ -6,6 +6,7 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
+    "generate:ohm": "ohm generateBundles --withTypes --esm src/parsers/ohm/grammar.ohm",
     "test": "vitest run",
     "test:parsers": "vitest run src/parsers",
     "bench": "vitest bench --run --reporter=default"
@@ -19,6 +20,7 @@
   },
   "devDependencies": {
     "@lezer/generator": "^1.8.1",
+    "@ohm-js/cli": "^2.0.1",
     "@types/node": "^26.6.4",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
