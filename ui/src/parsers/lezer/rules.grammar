@@ -1,0 +1,88 @@
+// The rule DSL as one Lezer grammar. Vocabulary and semantics come from ../../../../lexemes.md.
+//
+// - Token nodes are named after the token types (COUNT, BEFORE, ...), so the tree leaves are the token list.
+// - Keywords are specializations of one Word token. A word that no keyword matches stays a Word, which the
+//   grammar never accepts, so it shows up as an error node.
+// - Lines are flat: a header and the statements after it are siblings. Nesting them would need two tokens of
+//   lookahead (ACTIVITY, then COLON) to see where a block ends, and LR(1) has one.
+// - Only spaces and tabs are skipped. Newlines are SEP tokens.
+
+@top Program { SequenceText | RulesText }
+
+// Every character lands in a token or a Word. tokenize() parses with this top.
+@top Tokens { (token | Word)* }
+
+RulesText { Line? (SEP Line?)* }
+Line { Header Statement? | Statement }
+
+SequenceText { SEQUENCE (SEP Slot?)* }
+Slot { ACTIVITY DURATION | STATE DURATION | TRAVEL DURATION }
+
+Header { ANCHOR ACTIVITY COLON | ACTIVITY COLON }
+
+Statement { Placement | Spacing | Composite | Dependency | Count | FastingWait | Travel | Hospitalization }
+
+Placement { ACTIVITY COUNT? (EDGE? OCCURRENCE? Offsets | Direction Targets) }
+
+Spacing { COUNT QUALIFIER DURATION }
+Composite { COUNT? REL AnchorRef EDGE? OCCURRENCE? Offsets }
+Dependency { COUNT? Direction Targets }
+Count { COUNT }
+FastingWait { STATE DURATION Direction }
+Travel { TRAVEL DURATION (BEFORE (ACTIVITY | ADMISSION))? (RETURN (RETURN_MODE | DURATION))? }
+Hospitalization { HOSP DURATION (FROM AnchorRef)? }
+
+AnchorRef { ACTIVITY | DAY_ANCHOR }
+Direction { BEFORE | AFTER }
+Targets { ACTIVITY (COMMA ACTIVITY)* }
+Offsets { Offset (COMMA Offset)* }
+Offset { PRE | POST PostOffset+ }
+PostOffset { DURATION Window? }
+Window { WINDOW (DURATION | PERCENT) }
+
+token {
+  COUNT | DURATION | PERCENT | ACTIVITY | COLON | SEP | COMMA | WINDOW | QUALIFIER |
+  DAY_ANCHOR | BEFORE | AFTER | STATE | REL | EDGE | OCCURRENCE | PRE | POST | TRAVEL | SEQUENCE |
+  ADMISSION | RETURN | RETURN_MODE | HOSP | ANCHOR | FROM
+}
+
+kw<term> { @specialize<Word, term> }
+
+DAY_ANCHOR { kw<"day-start"> | kw<"day-end"> }
+BEFORE { kw<"before"> }
+AFTER { kw<"after"> }
+STATE { kw<"fast"> | kw<"wait"> }
+REL { kw<"rel"> }
+EDGE { kw<"start"> | kw<"end"> }
+OCCURRENCE { kw<"each"> | kw<"first"> | kw<"last"> }
+PRE { kw<"pre"> }
+POST { kw<"post"> }
+TRAVEL { kw<"travel"> }
+SEQUENCE { kw<"sequence"> }
+ADMISSION { kw<"admission"> }
+RETURN { kw<"return"> }
+RETURN_MODE { kw<"none"> | kw<"same"> | kw<"discharge"> }
+HOSP { kw<"hosp"> }
+ANCHOR { kw<"anchor"> }
+FROM { kw<"from"> }
+QUALIFIER { kw<"exactly"> | kw<"approximately"> | kw<"approx"> | kw<"atleast"> | qualifierSymbol }
+
+@skip { space }
+
+@tokens {
+  space { $[ \t]+ }
+  number { @digit+ ("." @digit+)? }
+  COUNT { @digit+ "x" }
+  DURATION { number ("min" | "m" | "h") }
+  PERCENT { number "%" }
+  ACTIVITY { '"' ![\n"]+ '"' }
+  COLON { ":" }
+  SEP { ";" | "\r"? "\n" }
+  COMMA { "," }
+  WINDOW { "±" | "+-" }
+  qualifierSymbol { ">=" | "=" | "~" }
+  // An unknown word, or an activity name with no closing quote. A Word never starts with a digit, which keeps it
+  // apart from COUNT, DURATION and PERCENT. "3xy" lexes as COUNT plus the Word "y".
+  Word { $[a-zA-Z_\-] $[a-zA-Z0-9_\-]* | '"' ![\n"]* }
+  @precedence { ACTIVITY, Word }
+}

@@ -11,11 +11,14 @@
     "bench": "vitest bench --run --reporter=default"
   },
   "dependencies": {
+    "@lezer/common": "^1.5.3",
+    "@lezer/lr": "^1.4.10",
     "ohm-js": "^17.5.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
   },
   "devDependencies": {
+    "@lezer/generator": "^1.8.1",
     "@types/node": "^26.6.4",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",

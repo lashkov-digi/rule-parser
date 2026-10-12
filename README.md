@@ -77,4 +77,5 @@ Copy `ui/src/parsers/_template/` to `ui/src/parsers/<library>/`, implement `toke
 
 | Library | Conformance |
 | --- | --- |
-| [Ohm](https://ohmjs.org/) 17.5 | All 28 checks pass. See [`comparison.md`](comparison.md) |
+| [Ohm](https://ohmjs.org/) 17.5 | All 30 checks pass. See [`comparison.md`](comparison.md) |
+| [Lezer](https://lezer.codemirror.net/) 1.4 | All 30 checks pass. See [`comparison.md`](comparison.md) |
