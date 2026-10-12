@@ -3,7 +3,7 @@ import type { MatchResult, Node } from 'ohm-js';
 import type { Anchor, Command, Diagnostic, Minutes, RuleCommand, SlotCommand, Span } from '../../derivation/index.ts';
 import type { Token } from '../../timeline.ts';
 import type { RuleParser } from '../types.ts';
-import grammar from './grammar.ohm-bundle.js';
+import grammar from './grammar.ohm';
 
 type Body<C> = C extends unknown ? Omit<C, 'id' | 'subject' | 'source'> : never;
 type RuleBody = Body<RuleCommand>;

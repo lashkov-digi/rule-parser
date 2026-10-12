@@ -4,9 +4,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
-    "typecheck": "tsc --noEmit",
-    "generate:ohm": "ohm generateBundles --withTypes --esm src/parsers/ohm/grammar.ohm",
+    "build": "npm run typecheck && vite build",
+    "typecheck": "node ohm.ts && tsc --noEmit",
     "test": "vitest run",
     "test:parsers": "vitest run src/parsers",
     "bench": "vitest bench --run --reporter=default"
