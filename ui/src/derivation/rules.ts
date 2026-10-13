@@ -240,12 +240,21 @@ export function deriveRules(commands: Command[], config: DayConfig): Draft {
   // Pass 2, second round: an occurrence left at the end that runs before others joins the earliest of their slots.
   // Its "before" chain reached no fixed occurrence, but what it runs before may have a slot from what that runs
   // after: "Pollen" before an ECG that runs after Vital Signs joins the ECG. The first round cannot see it, since
-  // the ECG's slot reads Pollen's as one of the occurrences it runs after. Repeats until nothing moves, for chains.
+  // the ECG's slot reads Pollen's as one of the occurrences it runs after. An occurrence that only runs after others
+  // reads their slots again, since one may have moved: "X" after that Pollen follows it into the ECG's slot.
+  // Repeats until nothing moves, for chains.
+  const follow = (occurrence: Occurrence) =>
+    earliest(
+      edges
+        .filter((edge) => edge.second === occurrence)
+        .map((edge) => (edge.first.fixed ? nextFixedAfter(edge.first) : slots.get(edge.first)!)),
+    );
   for (let moved = true; moved; ) {
     moved = false;
     for (const occurrence of floating) {
       if (slots.get(occurrence) !== END) continue;
-      const slot = earliest(edges.filter((edge) => edge.first === occurrence).map((edge) => slotOf(edge.second)));
+      const before = earliest(edges.filter((edge) => edge.first === occurrence).map((edge) => slotOf(edge.second)));
+      const slot = before !== END ? before : follow(occurrence);
       if (slot === END) continue;
       slots.set(occurrence, slot);
       moved = true;
