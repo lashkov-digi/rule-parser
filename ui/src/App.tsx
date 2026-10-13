@@ -160,7 +160,10 @@ export function App() {
     );
     return new Set([...(rowTokens.get(item.id) ?? []), ...named]);
   }, [activeItem, result, timeline, rowTokens, byName]);
-  const diagnostics = [...(result.parse?.diagnostics ?? []), ...(timeline?.diagnostics ?? [])];
+  const diagnostics = useMemo(
+    () => [...(result.parse?.diagnostics ?? []), ...(timeline?.diagnostics ?? [])],
+    [result, timeline],
+  );
 
   // A new pick during a fade restarts the timer, so the last choice always wins.
   const choose = (next: string) => {
@@ -213,7 +216,16 @@ export function App() {
                 Reset
               </button>
             </div>
-            <RuleEditor value={shownText} onChange={edit} readOnly={!editable} />
+            <RuleEditor
+              value={shownText}
+              onChange={edit}
+              readOnly={!editable}
+              tokens={result.tokens}
+              diagnostics={diagnostics}
+              active={activeToken}
+              setActive={setActiveToken}
+              linked={linkedTokens}
+            />
             <DiagnosticList diagnostics={diagnostics} />
           </section>
           <TokenView

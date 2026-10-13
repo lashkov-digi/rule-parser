@@ -242,6 +242,31 @@ h2 {
   background: var(--accent-soft);
 }
 
+/* In the editor every lexeme takes its kind's color. Hovered and linked ones light up as before. */
+.input .lexeme {
+  color: var(--kind);
+}
+
+.input .cm-tooltip {
+  border: none;
+  border-radius: 0.5rem;
+  background: var(--surface);
+  box-shadow:
+    0 0 0 1px var(--line),
+    0 6px 16px rgb(0 0 0 / 0.1);
+}
+
+.token-tooltip {
+  max-width: 22rem;
+  padding: 0.5rem 0.75rem;
+  font: 0.8125rem/1.5 -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', sans-serif;
+  color: var(--secondary);
+}
+
+.token-tooltip strong {
+  color: var(--text);
+}
+
 .input:focus-within {
   box-shadow:
     0 0 0 1px var(--accent),
