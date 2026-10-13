@@ -225,6 +225,7 @@ export function App() {
               active={activeToken}
               setActive={setActiveToken}
               linked={linkedTokens}
+              catalog={config.activities}
             />
             <DiagnosticList diagnostics={diagnostics} />
           </section>

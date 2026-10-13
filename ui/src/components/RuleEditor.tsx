@@ -1,3 +1,4 @@
+import { autocompletion, pickedCompletion, type Completion, type CompletionContext } from '@codemirror/autocomplete';
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
 import { lintGutter, setDiagnostics } from '@codemirror/lint';
 import { Annotation, Compartment, EditorState, StateEffect, StateField, type ChangeSpec } from '@codemirror/state';
@@ -12,8 +13,8 @@ import {
   type DecorationSet,
 } from '@codemirror/view';
 import { useEffect, useRef } from 'react';
-import type { Diagnostic } from '../derivation/index.ts';
-import { lintDiagnostics, tokenAt, tokenMarks } from '../editor.ts';
+import type { DayConfig, Diagnostic } from '../derivation/index.ts';
+import { closingQuote, lintDiagnostics, openQuote, tokenAt, tokenMarks } from '../editor.ts';
 import { dictionary, kindOf } from '../lexemes.ts';
 import type { Token } from '../timeline.ts';
 
@@ -68,10 +69,38 @@ const tokenTooltip = hoverTooltip((view, pos, side) => {
   };
 });
 
+// Inside quotes, the catalog activities, filtered by what is typed after the opening quote. Picking one replaces the
+// whole name, through its closing quote when the line has one, and adds that quote when it does not.
+const activityCompletion = (catalog: () => DayConfig['activities']) => (context: CompletionContext) => {
+  if (context.state.readOnly) return null;
+  const line = context.state.doc.lineAt(context.pos);
+  const start = openQuote(line.text, context.pos - line.from);
+  if (start === null) return null;
+  const options = Object.entries(catalog()).map(
+    ([name, entry]): Completion => ({
+      label: name,
+      detail: `${entry.duration} min`,
+      apply: (view, completion, from, to) => {
+        const current = view.state.doc.lineAt(to);
+        const end = closingQuote(current.text, to - current.from);
+        const insert = `${name}"`;
+        view.dispatch({
+          changes: { from, to: end === null ? to : current.from + end, insert },
+          selection: { anchor: from + insert.length },
+          annotations: pickedCompletion.of(completion),
+          userEvent: 'input.complete',
+        });
+      },
+    }),
+  );
+  return { from: line.from + start, options, validFor: /^[^"]*$/ };
+};
+
 // The rule text editor. The view owns the text and reports each edit through `onChange`. A `value` that differs from
 // the text, such as after a reset or a rename, goes in as an undoable change. Remount it to start a fresh history.
 // `tokens` and `diagnostics` belong to `value` and are drawn over the text. Hovering a token reports it through
-// `setActive`, and `linked` lights up the tokens behind the hovered timeline row.
+// `setActive`, and `linked` lights up the tokens behind the hovered timeline row. Typing inside quotes suggests the
+// activities in `catalog`.
 export function RuleEditor({
   value,
   onChange,
@@ -81,6 +110,7 @@ export function RuleEditor({
   active,
   setActive,
   linked,
+  catalog,
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -90,6 +120,7 @@ export function RuleEditor({
   active: number | null;
   setActive: (index: number | null) => void;
   linked: Set<number>;
+  catalog: DayConfig['activities'];
 }) {
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
@@ -99,6 +130,8 @@ export function RuleEditor({
   change.current = onChange;
   const hover = useRef(setActive);
   hover.current = setActive;
+  const activities = useRef(catalog);
+  activities.current = catalog;
 
   useEffect(() => {
     // The token under the mouse, reported only when it changes.
@@ -120,6 +153,7 @@ export function RuleEditor({
           marks,
           tokenTooltip,
           lintGutter(),
+          autocompletion({ override: [activityCompletion(() => activities.current)] }),
           EditorView.contentAttributes.of({ 'aria-label': 'Rule text', spellcheck: 'false' }),
           EditorView.updateListener.of((update) => {
             if (update.docChanged && !update.transactions.some((tr) => tr.annotation(external)))

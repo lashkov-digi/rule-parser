@@ -11,6 +11,7 @@
     "bench": "vitest bench --run --reporter=default"
   },
   "dependencies": {
+    "@codemirror/autocomplete": "^6.20.3",
     "@codemirror/commands": "^6.11.1",
     "@codemirror/lint": "^6.9.7",
     "@codemirror/state": "^6.7.6",

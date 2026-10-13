@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { lintDiagnostics, tokenAt, tokenMarks } from './editor.ts';
+import { closingQuote, lintDiagnostics, openQuote, tokenAt, tokenMarks } from './editor.ts';
 import type { Token } from './timeline.ts';
 
 // "Vital Signs":⏎  after "PK sampling"
@@ -49,5 +49,36 @@ describe('lintDiagnostics', () => {
   it('cuts a span past the end of the text back to it', () => {
     const [diagnostic] = lintDiagnostics([{ from: 30, to: 40, severity: 'warning', code: 'semantic', message: 'Unknown.' }], 36);
     expect(diagnostic).toMatchObject({ from: 30, to: 36 });
+  });
+});
+
+// Offsets into one line of text; | marks the cursor in the comments.
+describe('openQuote', () => {
+  it('starts the name right after a quote just typed', () => {
+    expect(openQuote('"', 1)).toBe(1); // "|
+    expect(openQuote('  after "', 9)).toBe(9); //   after "|
+  });
+
+  it('finds the start of a half-typed name and of a name the cursor is in', () => {
+    expect(openQuote('after "Vit', 10)).toBe(7); // after "Vit|
+    expect(openQuote('"Vital Signs":', 4)).toBe(1); // "Vit|al Signs":
+  });
+
+  it('is null outside a name', () => {
+    expect(openQuote('"Vital Signs":', 14)).toBeNull(); // "Vital Signs":|
+    expect(openQuote('"Vital Signs":', 0)).toBeNull(); // |"Vital Signs":
+    expect(openQuote('after "PK sampling", ', 21)).toBeNull(); // after "PK sampling", |
+  });
+});
+
+describe('closingQuote', () => {
+  it('ends past the closing quote of the name the cursor is in', () => {
+    expect(closingQuote('"Vital Signs":', 4)).toBe(13); // "Vit|al Signs":
+    expect(closingQuote('"Vital Signs":', 12)).toBe(13); // "Vital Signs|":
+  });
+
+  it('is null when the name is not closed on the line', () => {
+    expect(closingQuote('after "Vit', 10)).toBeNull(); // after "Vit|
+    expect(closingQuote('after "Vit al', 10)).toBeNull(); // after "Vit| al
   });
 });

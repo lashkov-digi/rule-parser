@@ -36,3 +36,18 @@ export function lintDiagnostics(diagnostics: Diagnostic[], length: number): Lint
     };
   });
 }
+
+// An activity name runs from a quote to the next quote on the same line, as the lexer reads it, so the quotes before
+// the cursor tell whether it is inside one. Both take one line of text and an offset into it.
+
+// Where the name around `pos` starts, right after its opening quote, or null outside a name.
+export function openQuote(line: string, pos: number): number | null {
+  const before = line.slice(0, pos);
+  return before.split('"').length % 2 === 0 ? before.lastIndexOf('"') + 1 : null;
+}
+
+// Where the name around `pos` ends, past its closing quote, or null when the line does not close it.
+export function closingQuote(line: string, pos: number): number | null {
+  const index = line.indexOf('"', pos);
+  return index === -1 ? null : index + 1;
+}

@@ -267,6 +267,39 @@ h2 {
   color: var(--text);
 }
 
+/* Activity suggestions. `.cm-editor` lifts these over CodeMirror's own theme, which it injects after this sheet. */
+.input .cm-editor .cm-tooltip-autocomplete > ul {
+  max-height: 14rem;
+  padding: 0.25rem;
+  font: 0.8125rem/1.5 -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', sans-serif;
+}
+
+.input .cm-editor .cm-tooltip-autocomplete > ul > li {
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  color: var(--text);
+}
+
+.input .cm-editor .cm-tooltip-autocomplete > ul > li[aria-selected] {
+  color: #fff;
+  background: var(--accent);
+}
+
+.input .cm-editor .cm-completionMatchedText {
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.input .cm-editor .cm-completionDetail {
+  margin-left: 0.75rem;
+  font-style: normal;
+  color: var(--muted);
+}
+
+.input .cm-editor li[aria-selected] .cm-completionDetail {
+  color: rgb(255 255 255 / 0.8);
+}
+
 .input:focus-within {
   box-shadow:
     0 0 0 1px var(--accent),
