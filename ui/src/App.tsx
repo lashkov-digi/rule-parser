@@ -229,7 +229,6 @@ export function App() {
             <DiagnosticList diagnostics={diagnostics} />
           </section>
           <TokenView
-            text={shownText}
             tokens={result.tokens}
             active={activeToken}
             setActive={setActiveToken}
