@@ -20,6 +20,7 @@ type Occurrence = {
 type Edge = { first: Occurrence; second: Occurrence };
 
 const END = 'end'; // slot for occurrences that no fixed occurrence bounds; they run after everything else
+const FREE = 'free'; // no slot yet while pass 2 runs: nothing bounds it so far; what is still free at the end goes to END
 
 /*
  * Rules mode, POC scope: count, dependency, composite, fasting-wait and hospitalization. Placement:
@@ -191,10 +192,17 @@ export function deriveRules(commands: Command[], config: DayConfig): Draft {
   // 2. Slots for floating occurrences.
   const fixed = all.filter((occurrence) => occurrence.fixed).sort((a, b) => a.start! - b.start!);
   type Slot = Occurrence | typeof END;
-  const nextFixedAfter = (occurrence: Occurrence): Slot =>
-    fixed.find((candidate) => candidate.start! - candidate.before >= occurrence.start! + occurrence.duration + occurrence.after) ?? END;
+  // The first fixed occurrence after `occurrence` that leaves room for `follower` in between.
+  const nextFixedAfter = (occurrence: Occurrence, follower: Occurrence): Slot => {
+    const from = occurrence.start! + occurrence.duration + occurrence.after;
+    const needed = follower.before + follower.duration + follower.after;
+    return fixed.find((candidate) => candidate.start! - candidate.before - from >= needed) ?? END;
+  };
   const timeOf = (slot: Slot) => (slot === END ? Infinity : slot.start!);
   const earliest = (candidates: Slot[]) => candidates.reduce<Slot>((best, slot) => (timeOf(slot) < timeOf(best) ? slot : best), END);
+  // An occurrence runs after all of what it runs after, so it waits for the latest of their slots.
+  const latest = (candidates: Slot[]) =>
+    candidates.reduce<Slot | typeof FREE>((best, slot) => (best === FREE || timeOf(slot) > timeOf(best) ? slot : best), FREE);
 
   // Pass 1, deadline: the earliest fixed occurrence it must run before, following "before" chains only.
   // A loop here is a real contradiction (A before B before A).
@@ -215,51 +223,52 @@ export function deriveRules(commands: Command[], config: DayConfig): Draft {
     return deadline;
   }
 
-  // Pass 2, slot: its deadline; without one, it follows what it runs after, as early as it can.
-  const slots = new Map<Occurrence, Slot>();
-  function slotOf(occurrence: Occurrence): Slot {
+  // Pass 2, slot: its deadline; without one, it follows what it runs after, as early as it can. What it runs after
+  // with no slot yet does not hold it back.
+  const slots = new Map<Occurrence, Slot | typeof FREE>();
+  const follow = (occurrence: Occurrence, slotOfFirst: (first: Occurrence) => Slot | typeof FREE) =>
+    latest(
+      edges
+        .filter((edge) => edge.second === occurrence)
+        .map((edge) => (edge.first.fixed ? nextFixedAfter(edge.first, occurrence) : slotOfFirst(edge.first)))
+        .filter((slot): slot is Slot => slot !== FREE),
+    );
+  function slotOf(occurrence: Occurrence): Slot | typeof FREE {
     if (occurrence.fixed) return occurrence;
     const known = slots.get(occurrence);
     if (known) return known;
-    slots.set(occurrence, END); // guards the walk; loops were reported in pass 1
+    slots.set(occurrence, FREE); // guards the walk; loops were reported in pass 1
     const deadline = deadlineOf(occurrence);
-    const slot =
-      deadline !== END
-        ? deadline
-        : earliest(
-            edges
-              .filter((edge) => edge.second === occurrence)
-              .map((edge) => (edge.first.fixed ? nextFixedAfter(edge.first) : slotOf(edge.first))),
-          );
+    const slot = deadline !== END ? deadline : follow(occurrence, slotOf);
     slots.set(occurrence, slot);
     return slot;
   }
   const floating = all.filter((occurrence) => !occurrence.fixed);
   floating.forEach(slotOf);
 
-  // Pass 2, second round: an occurrence left at the end that runs before others joins the earliest of their slots.
+  // Pass 2, second round: a free occurrence that runs before others joins the earliest of their slots.
   // Its "before" chain reached no fixed occurrence, but what it runs before may have a slot from what that runs
   // after: "Pollen" before an ECG that runs after Vital Signs joins the ECG. The first round cannot see it, since
   // the ECG's slot reads Pollen's as one of the occurrences it runs after. An occurrence that only runs after others
   // reads their slots again, since one may have moved: "X" after that Pollen follows it into the ECG's slot.
   // Repeats until nothing moves, for chains.
-  const follow = (occurrence: Occurrence) =>
-    earliest(
-      edges
-        .filter((edge) => edge.second === occurrence)
-        .map((edge) => (edge.first.fixed ? nextFixedAfter(edge.first) : slots.get(edge.first)!)),
-    );
   for (let moved = true; moved; ) {
     moved = false;
     for (const occurrence of floating) {
-      if (slots.get(occurrence) !== END) continue;
-      const before = earliest(edges.filter((edge) => edge.first === occurrence).map((edge) => slotOf(edge.second)));
-      const slot = before !== END ? before : follow(occurrence);
-      if (slot === END) continue;
+      if (slots.get(occurrence) !== FREE) continue;
+      const before = earliest(
+        edges
+          .filter((edge) => edge.first === occurrence)
+          .map((edge) => slotOf(edge.second))
+          .filter((slot): slot is Slot => slot !== FREE),
+      );
+      const slot = before !== END ? before : follow(occurrence, (first) => slots.get(first)!);
+      if (slot === FREE || slot === END) continue;
       slots.set(occurrence, slot);
       moved = true;
     }
   }
+  for (const occurrence of floating) if (slots.get(occurrence) === FREE) slots.set(occurrence, END);
 
   // 3. Place each slot: dependency order first, CDT order to break ties.
   const cdt = (name: string) => {

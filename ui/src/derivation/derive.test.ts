@@ -75,6 +75,34 @@ test('an activity after one that joined a slot through its dependency follows it
   });
 });
 
+test('an activity after two others waits for the later of their slots', () => {
+  // The ECG runs after Vital Signs and after PK sampling. Vital Signs fill the slot before each PK sampling, so each
+  // ECG waits for its PK sampling, and the first one also for the anchor, since nothing fits between the pre-dose PK
+  // sampling and the IP.
+  const parse = fixture<ParseResult>('product-scenario.parse.json');
+  parse.commands.push({
+    id: 'c4',
+    type: 'dependency',
+    subject: '12-lead ECG',
+    count: null,
+    direction: 'after',
+    targets: ['PK sampling'],
+    source: { from: 138, to: 168 },
+  });
+  const { items, diagnostics } = derive(parse, fixture<DayConfig>('product-scenario.config.json'));
+  const runs = (name: string) =>
+    items
+      .filter((item) => item.kind === 'activity' && item.activities[0] === name)
+      .map((item) => (item.placement.kind === 'fixed' ? item.placement.start : NaN));
+  const [ip] = runs('IP Administration');
+  const pk = runs('PK sampling');
+  const ecg = runs('12-lead ECG');
+  assert.deepEqual(diagnostics, []);
+  assert.equal(ecg.length, 3);
+  ecg.forEach((start, n) => assert.ok(pk[n] + 5 <= start, `ECG ${n + 1} at ${start} starts before PK sampling ${n + 1} at ${pk[n]} ends`));
+  assert.ok(ip + 1 <= ecg[0], `ECG 1 at ${ecg[0]} starts before IP Administration at ${ip} ends`);
+});
+
 test('an activity missing from the catalog is reported, not thrown', () => {
   const parse = fixture<ParseResult>('product-scenario.parse.json');
   const config = fixture<DayConfig>('product-scenario.config.json');
