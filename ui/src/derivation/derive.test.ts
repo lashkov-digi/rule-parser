@@ -23,6 +23,32 @@ test('a dependency with a written count does not inherit', () => {
   assert.equal(result.items.filter((item) => item.activities[0] === '12-lead ECG').length, 1);
 });
 
+test('a dependency on an activity that only runs after something pairs by occurrence', () => {
+  // "Pollen": before "12-lead ECG", where the ECG itself only runs after Vital Signs. Pollen inherits the ECG's 3x,
+  // and each Pollen runs before the ECG with the same number.
+  const parse = fixture<ParseResult>('product-scenario.parse.json');
+  parse.commands.push({
+    id: 'c4',
+    type: 'dependency',
+    subject: 'Pollen',
+    count: null,
+    direction: 'before',
+    targets: ['12-lead ECG'],
+    source: { from: 138, to: 168 },
+  });
+  const config = fixture<DayConfig>('product-scenario.config.json');
+  config.activities.Pollen = { duration: 4 };
+  const { items } = derive(parse, config);
+  const runs = (name: string) =>
+    items
+      .filter((item) => item.kind === 'activity' && item.activities[0] === name)
+      .map((item) => (item.placement.kind === 'fixed' ? item.placement.start : NaN));
+  const pollen = runs('Pollen');
+  const ecg = runs('12-lead ECG');
+  assert.equal(pollen.length, 3);
+  pollen.forEach((start, n) => assert.ok(start + 4 <= ecg[n], `Pollen ${n + 1} at ${start} ends after ECG ${n + 1} at ${ecg[n]}`));
+});
+
 test('an activity missing from the catalog is reported, not thrown', () => {
   const parse = fixture<ParseResult>('product-scenario.parse.json');
   const config = fixture<DayConfig>('product-scenario.config.json');

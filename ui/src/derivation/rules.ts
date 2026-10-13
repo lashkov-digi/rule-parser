@@ -237,6 +237,21 @@ export function deriveRules(commands: Command[], config: DayConfig): Draft {
   const floating = all.filter((occurrence) => !occurrence.fixed);
   floating.forEach(slotOf);
 
+  // Pass 2, second round: an occurrence left at the end that runs before others joins the earliest of their slots.
+  // Its "before" chain reached no fixed occurrence, but what it runs before may have a slot from what that runs
+  // after: "Pollen" before an ECG that runs after Vital Signs joins the ECG. The first round cannot see it, since
+  // the ECG's slot reads Pollen's as one of the occurrences it runs after. Repeats until nothing moves, for chains.
+  for (let moved = true; moved; ) {
+    moved = false;
+    for (const occurrence of floating) {
+      if (slots.get(occurrence) !== END) continue;
+      const slot = earliest(edges.filter((edge) => edge.first === occurrence).map((edge) => slotOf(edge.second)));
+      if (slot === END) continue;
+      slots.set(occurrence, slot);
+      moved = true;
+    }
+  }
+
   // 3. Place each slot: dependency order first, CDT order to break ties.
   const cdt = (name: string) => {
     const index = config.cdtOrder.indexOf(name);
