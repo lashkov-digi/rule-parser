@@ -60,7 +60,7 @@ export type ParseResult = {
 // Configuration that is not part of the text
 
 export type DayConfig = {
-  activities: Record<string, { duration: Minutes }>; // the activity catalog
+  activities: Record<string, { duration: Minutes; description?: string }>; // the activity catalog; derivation reads durations only
   cdtOrder: string[]; // tie-break order, earliest first
 };
 

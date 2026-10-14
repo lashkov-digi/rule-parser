@@ -1,16 +1,20 @@
 {
   "activities": {
     "Vital Signs": {
-      "duration": 15
+      "duration": 15,
+      "description": "Blood pressure, pulse, respiratory rate and body temperature, taken seated after 5 minutes of rest."
     },
     "12-lead ECG": {
-      "duration": 8
+      "duration": 8,
+      "description": "Resting 12-lead electrocardiogram, recorded supine after at least 5 minutes of rest."
     },
     "PK sampling": {
-      "duration": 5
+      "duration": 5,
+      "description": "Blood draw to measure the concentration of the study drug over time."
     },
     "IP Administration": {
-      "duration": 1
+      "duration": 1,
+      "description": "Dose of the investigational product. Timed assessments count from its start."
     }
   },
   "cdtOrder": [

@@ -52,7 +52,7 @@ export function CatalogEditor({
   const typeDuration = (name: string, value: string) => {
     setDurations((current) => ({ ...current, [name]: value }));
     const minutes = positive(value);
-    if (minutes !== null) onChange({ ...catalog, [name]: { duration: minutes } });
+    if (minutes !== null) onChange({ ...catalog, [name]: { ...catalog[name], duration: minutes } });
   };
   const settleDuration = (name: string) => setDurations(({ [name]: _dropped, ...rest }) => rest);
 

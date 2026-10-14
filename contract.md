@@ -163,7 +163,7 @@ Derivation turns commands into a flat list of items for one day. The UI draws it
 
 ```ts
 type DayConfig = {
-  activities: Record<string, { duration: Minutes }>;  // from the activity catalog
+  activities: Record<string, { duration: Minutes; description?: string }>;  // from the activity catalog; the editor shows the description on hover
   cdtOrder: string[];                                 // activity names, earliest first
 };
 
