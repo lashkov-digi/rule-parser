@@ -145,12 +145,11 @@ export function deriveRules(commands: Command[], config: DayConfig): Draft {
       report(rule.source, 'warning', 'The POC derivation does not support day-end yet');
       continue;
     }
-    // A post offset counts only the time in between: neither the anchor nor the subject's earlier
-    // post occurrences use up the offset. "post 1h 2h" after a 1 min IP with 5 min PK draws puts the
-    // draws at IP end + 60 and IP end + 120 + 5, so each hour between draws is a full hour.
+    // A post offset counts from the anchor's edge, its start unless the rule says `end`, as a protocol reads
+    // "2h post-dose". Earlier draws do not push later ones back: "post 1h 2h" after an IP at T 0 puts the draws at
+    // T+1:00 and T+2:00, or at T+1:01 and T+2:01 after a 1 min IP with `end`.
     const anchored = rule.anchor.kind === 'activity' ? of(rule.anchor.name)[0] : null;
-    const anchorDuration = anchored?.duration ?? 0;
-    let excluded = anchorDuration;
+    const edge = rule.edge === 'end' ? (anchored?.duration ?? 0) : 0;
     let previousAfter = -1;
     rule.offsets.forEach((offset, i) => {
       const occurrence = of(rule.subject)[i];
@@ -163,8 +162,7 @@ export function deriveRules(commands: Command[], config: DayConfig): Draft {
       }
       if (offset.after <= previousAfter) report(rule.source, 'warning', 'Post offsets should go from shortest to longest');
       previousAfter = offset.after;
-      occurrence.start = excluded + offset.after;
-      excluded += occurrence.duration;
+      occurrence.start = edge + offset.after;
       if (offset.window) {
         const minutes = offset.window.kind === 'duration' ? offset.window.value : Math.round((offset.after * offset.window.value) / 100);
         occurrence.window = { before: minutes, after: minutes };
