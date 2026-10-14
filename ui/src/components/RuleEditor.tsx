@@ -45,29 +45,45 @@ const marks = StateField.define<Marks>({
   provide: (field) => EditorView.decorations.from(field, (value) => value.decorations),
 });
 
-// The token's type, kind and description, the same text the token chips show.
-const tokenTooltip = hoverTooltip((view, pos, side) => {
-  const tokens = view.state.field(marks).tokens;
-  const index = tokens && tokenAt(tokens, side < 0 ? pos - 1 : pos);
-  if (!tokens || index === null) return null;
-  const token = tokens[index];
-  return {
-    pos: token.from,
-    end: token.to,
-    above: true,
-    create: () => {
-      const dom = document.createElement('div');
-      dom.className = 'token-tooltip';
-      const type = dom.appendChild(document.createElement('strong'));
-      type.textContent = token.type;
-      const kind = dom.appendChild(document.createElement('span'));
-      kind.className = 'muted';
-      kind.textContent = ` ${kindOf(token.type)} `;
-      dom.append(dictionary.get(token.type)?.description ?? '');
-      return { dom };
-    },
-  };
-});
+// The token's type, kind and description, the same text the token chips show. An activity adds its catalog entry:
+// duration and description, or a note that the catalog lacks it.
+const tokenTooltip = (catalog: () => DayConfig['activities']) =>
+  hoverTooltip((view, pos, side) => {
+    const tokens = view.state.field(marks).tokens;
+    const index = tokens && tokenAt(tokens, side < 0 ? pos - 1 : pos);
+    if (!tokens || index === null) return null;
+    const token = tokens[index];
+    return {
+      pos: token.from,
+      end: token.to,
+      above: true,
+      create: () => {
+        const dom = document.createElement('div');
+        dom.className = 'token-tooltip';
+        const type = dom.appendChild(document.createElement('strong'));
+        type.textContent = token.type;
+        const kind = dom.appendChild(document.createElement('span'));
+        kind.className = 'muted';
+        kind.textContent = ` ${kindOf(token.type)} `;
+        dom.append(dictionary.get(token.type)?.description ?? '');
+        if (token.type === 'ACTIVITY') dom.append(activityInfo(token.text.slice(1, -1), catalog()));
+        return { dom };
+      },
+    };
+  });
+
+function activityInfo(name: string, catalog: DayConfig['activities']) {
+  const info = document.createElement('div');
+  info.className = 'token-tooltip-activity';
+  const entry = catalog[name];
+  const title = info.appendChild(document.createElement('strong'));
+  title.textContent = name;
+  const duration = info.appendChild(document.createElement('span'));
+  duration.className = 'muted';
+  duration.textContent = entry ? ` ${entry.duration} min` : ' not in the activity catalog';
+  if (entry?.description) info.appendChild(document.createElement('p')).textContent = entry.description;
+  return info;
+}
 
 // Inside quotes, the catalog activities, filtered by what is typed after the opening quote. Picking one replaces the
 // whole name, through its closing quote when the line has one, and adds that quote when it does not.
@@ -100,7 +116,7 @@ const activityCompletion = (catalog: () => DayConfig['activities']) => (context:
 // the text, such as after a reset or a rename, goes in as an undoable change. Remount it to start a fresh history.
 // `tokens` and `diagnostics` belong to `value` and are drawn over the text. Hovering a token reports it through
 // `setActive`, and `linked` lights up the tokens behind the hovered timeline row. Typing inside quotes suggests the
-// activities in `catalog`.
+// activities in `catalog`, and hovering one shows its catalog entry.
 export function RuleEditor({
   value,
   onChange,
@@ -151,7 +167,7 @@ export function RuleEditor({
           keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
           editable.current.of(editability(readOnly)),
           marks,
-          tokenTooltip,
+          tokenTooltip(() => activities.current),
           lintGutter(),
           autocompletion({ override: [activityCompletion(() => activities.current)] }),
           EditorView.contentAttributes.of({ 'aria-label': 'Rule text', spellcheck: 'false' }),

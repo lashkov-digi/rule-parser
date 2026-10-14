@@ -267,6 +267,17 @@ h2 {
   color: var(--text);
 }
 
+/* An activity's catalog entry, under the token line. */
+.token-tooltip-activity {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--line);
+}
+
+.token-tooltip-activity p {
+  margin: 0.25rem 0 0;
+}
+
 /* Activity suggestions. `.cm-editor` lifts these over CodeMirror's own theme, which it injects after this sheet. */
 .input .cm-editor .cm-tooltip-autocomplete > ul {
   max-height: 14rem;
