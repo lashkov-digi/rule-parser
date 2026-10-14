@@ -153,7 +153,7 @@
         "kind": "fixed",
         "start": 52
       },
-      "duration": 37,
+      "duration": 36,
       "gap": null,
       "isAnchor": false,
       "window": null,
@@ -175,7 +175,7 @@
       "together": null,
       "placement": {
         "kind": "fixed",
-        "start": 89
+        "start": 88
       },
       "duration": 5,
       "gap": 0,
@@ -199,7 +199,7 @@
       "together": null,
       "placement": {
         "kind": "fixed",
-        "start": 94
+        "start": 93
       },
       "duration": 15,
       "gap": 0,
@@ -223,7 +223,7 @@
       "together": null,
       "placement": {
         "kind": "fixed",
-        "start": 109
+        "start": 108
       },
       "duration": 8,
       "gap": 0,
@@ -242,9 +242,9 @@
       "together": null,
       "placement": {
         "kind": "fixed",
-        "start": 117
+        "start": 116
       },
-      "duration": 37,
+      "duration": 32,
       "gap": null,
       "isAnchor": false,
       "window": null,
@@ -266,7 +266,7 @@
       "together": null,
       "placement": {
         "kind": "fixed",
-        "start": 154
+        "start": 148
       },
       "duration": 5,
       "gap": 0,
@@ -279,8 +279,8 @@
     }
   ],
   "summary": {
-    "onSite": 159,
-    "withTravel": 159
+    "onSite": 153,
+    "withTravel": 153
   },
   "diagnostics": []
 }

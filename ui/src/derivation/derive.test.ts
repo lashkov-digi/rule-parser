@@ -103,6 +103,27 @@ test('an activity after two others waits for the later of their slots', () => {
   assert.ok(ip + 1 <= ecg[0], `ECG 1 at ${ecg[0]} starts before IP Administration at ${ip} ends`);
 });
 
+test('a post offset counts from the anchor edge, not from earlier draws', () => {
+  // `4x rel "IP Administration" pre, post 1h 2h`: IP runs at T 0 for 1 min and each PK draw takes 5 min. The draws sit
+  // 1h and 2h after the IP starts, or after it ends with `end`, however long the draws before them take.
+  const parse = fixture<ParseResult>('product-scenario.parse.json');
+  const config = fixture<DayConfig>('product-scenario.config.json');
+  const draws = () => {
+    const { items } = derive(parse, config);
+    const start = (name: string) =>
+      items
+        .filter((item) => item.kind === 'activity' && item.activities[0] === name)
+        .map((item) => (item.placement.kind === 'fixed' ? item.placement.start : NaN));
+    const [ip] = start('IP Administration');
+    return start('PK sampling').map((at) => at - ip);
+  };
+  assert.deepEqual(draws(), [-5, 60, 120]);
+  const composite = parse.commands.find((command) => command.type === 'composite');
+  assert.ok(composite?.type === 'composite');
+  composite.edge = 'end';
+  assert.deepEqual(draws(), [-5, 61, 121]);
+});
+
 test('an activity missing from the catalog is reported, not thrown', () => {
   const parse = fixture<ParseResult>('product-scenario.parse.json');
   const config = fixture<DayConfig>('product-scenario.config.json');
