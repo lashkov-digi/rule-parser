@@ -58,6 +58,25 @@ describe('contextAt', () => {
     expect(at('anchor |')).toEqual({ from: 7, keywords: [], activities: { exclude: [], header: true } });
   });
 
+  it('offers the activities to place in an anchor block, without the anchor', () => {
+    expect(at('anchor "IP":\n  |')).toEqual({ from: 15, keywords: [], activities: { exclude: ['IP'], header: false } });
+    expect(at('anchor "IP": |')).toMatchObject({ keywords: [], activities: { exclude: ['IP'] } });
+  });
+
+  it('walks a placement: offsets from the anchor, or a direction', () => {
+    const OPENERS = ['EDGE', 'OCCURRENCE', 'PRE', 'POST', 'BEFORE', 'AFTER'];
+    expect(at('anchor "IP":\n  "A" |')?.keywords).toEqual(OPENERS);
+    expect(at('anchor "IP":\n  "A" 3x |')?.keywords).toEqual(OPENERS);
+    expect(at('anchor "IP":\n  "A" start |')?.keywords).toEqual(['OCCURRENCE', 'PRE', 'POST']);
+    expect(at('anchor "IP":\n  "A" pre, |')?.keywords).toEqual(['PRE', 'POST']);
+    expect(at('anchor "IP":\n  "A" before |')).toMatchObject({ keywords: [], activities: { exclude: ['A'] } });
+    expect(at('anchor "IP":\n  "A" before "B", |')?.activities?.exclude).toEqual(['A', 'B']);
+  });
+
+  it('does not carry the subject of an earlier header into an anchor block', () => {
+    expect(at('"V":\n  before "B"\nanchor "IP":\n  "A" after |')?.activities?.exclude).toEqual(['A']);
+  });
+
   it('offers slots in sequence mode', () => {
     expect(at('sequence\n|')).toEqual({ from: 9, keywords: ['STATE', 'TRAVEL'], activities: { exclude: [], header: false } });
     expect(at('sequence\n"A" |')).toBeNull();

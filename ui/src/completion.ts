@@ -21,11 +21,13 @@ export function contextAt(state: EditorState, pos: number): Context | null {
   const tree = ensureSyntaxTree(state, from) ?? syntaxTree(state);
   const name = (text: string) => text.slice(1, -1);
 
-  // The tokens of the statement line before the word being typed, and the subject of the last header so far. A
-  // separator starts a new line. Error nodes and unknown words are skipped: they are what is being typed.
+  // The tokens of the statement line before the word being typed, and the block of the last header so far: its
+  // subject, or the anchor its placements are measured from. A separator starts a new line. Error nodes and unknown
+  // words are skipped: they are what is being typed.
   let leaves: Leaf[] = [];
   let anyBefore = false;
   let subject: string | null = null;
+  let anchor: string | null = null;
   let sequence = false;
   tree.iterate({
     to: from,
@@ -33,9 +35,12 @@ export function contextAt(state: EditorState, pos: number): Context | null {
       if (node.from >= from) return false;
       if (node.type.isError || node.name === 'Word') return false;
       if (node.name === 'SequenceText') sequence = true;
-      if (node.name === 'Header') {
+      // Error recovery reads a lone `"Name"` as a header without its colon, so a header counts once the colon is written.
+      if (node.name === 'Header' && node.node.getChild('COLON')) {
         const activity = node.node.getChild('ACTIVITY');
-        if (activity && !node.node.getChild('ANCHOR')) subject = name(doc.sliceString(activity.from, activity.to));
+        const header = activity && name(doc.sliceString(activity.from, activity.to));
+        if (node.node.getChild('ANCHOR')) [subject, anchor] = [null, header];
+        else if (header) [subject, anchor] = [header, null];
       }
       if (node.node.firstChild !== null) return;
       if (node.to > from) return;
@@ -58,8 +63,9 @@ export function contextAt(state: EditorState, pos: number): Context | null {
     if (types.length === 1) return result([], activities([], true));
     statement = leaves.slice(3);
     if (types[2] !== 'COLON') return null;
+    [subject, anchor] = [null, name(leaves[1].text)];
   } else if (types[0] === 'ACTIVITY' && types[1] === 'COLON') {
-    subject = name(leaves[0].text);
+    [subject, anchor] = [name(leaves[0].text), null];
     statement = leaves.slice(2);
   } else if (types.length === 0 && !/^\s/.test(line.text)) {
     return result(anyBefore ? ['ANCHOR'] : ['ANCHOR', 'SEQUENCE'], activities([], true));
@@ -70,6 +76,18 @@ export function contextAt(state: EditorState, pos: number): Context | null {
   const last = kinds.at(-1);
   const listed = statement.filter((leaf) => leaf.type === 'ACTIVITY').map((leaf) => name(leaf.text));
 
+  // An anchor block holds placements only: `"Name" [COUNT]` and then offsets from the anchor or a direction.
+  if (anchor !== null) {
+    if (kinds.length === 0) return result([], activities([anchor]));
+    if (kinds[0] !== 'ACTIVITY') return null;
+    const rest = kinds.slice(kinds[1] === 'COUNT' ? 2 : 1);
+    if (rest.length === 0) return result(['EDGE', 'OCCURRENCE', 'PRE', 'POST', 'BEFORE', 'AFTER']);
+    if (rest[0] === 'BEFORE' || rest[0] === 'AFTER')
+      return last === 'BEFORE' || last === 'AFTER' || last === 'COMMA' ? result([], activities(listed)) : null;
+    if (last === 'EDGE') return result(['OCCURRENCE', 'PRE', 'POST']);
+    if (last === 'OCCURRENCE' || last === 'COMMA') return result(['PRE', 'POST']);
+    return null;
+  }
   if (kinds.length === 0) return result(STARTERS);
   if (kinds[0] === 'STATE') return kinds.length === 2 ? result(['BEFORE', 'AFTER']) : null;
   if (kinds[0] === 'HOSP') {
