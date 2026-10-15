@@ -13,9 +13,11 @@ import {
   type DecorationSet,
 } from '@codemirror/view';
 import { useEffect, useRef } from 'react';
+import { contextAt } from '../completion.ts';
 import type { DayConfig, Diagnostic } from '../derivation/index.ts';
 import { closingQuote, lintDiagnostics, openQuote, tokenAt, tokenMarks } from '../editor.ts';
 import { dictionary, kindOf } from '../lexemes.ts';
+import { ruleLanguage } from '../parsers/lezer/language.ts';
 import type { Token } from '../timeline.ts';
 
 // The one change that turns `from` into `to`: everything between their common prefix and common suffix. Reset and
@@ -85,38 +87,53 @@ function activityInfo(name: string, catalog: DayConfig['activities']) {
   return info;
 }
 
-// Inside quotes, the catalog activities, filtered by what is typed after the opening quote. Picking one replaces the
-// whole name, through its closing quote when the line has one, and adds that quote when it does not.
-const activityCompletion = (catalog: () => DayConfig['activities']) => (context: CompletionContext) => {
+// Suggestions at the cursor. Inside quotes, the catalog activities, filtered by what is typed after the opening quote.
+// Picking one replaces the whole name, through its closing quote when the line has one, and adds that quote when it
+// does not. Elsewhere, what the syntax tree says fits there: keywords, and activities with their quotes. An activity
+// list opens on its own, after `before ` say; keywords wait for a letter or Ctrl+Space. The subject and the targets
+// already listed are left out.
+const ruleCompletion = (catalog: () => DayConfig['activities']) => (context: CompletionContext) => {
   if (context.state.readOnly) return null;
   const line = context.state.doc.lineAt(context.pos);
   const start = openQuote(line.text, context.pos - line.from);
-  if (start === null) return null;
-  const options = Object.entries(catalog()).map(
-    ([name, entry]): Completion => ({
-      label: name,
-      detail: `${entry.duration} min`,
-      apply: (view, completion, from, to) => {
-        const current = view.state.doc.lineAt(to);
-        const end = closingQuote(current.text, to - current.from);
-        const insert = `${name}"`;
-        view.dispatch({
-          changes: { from, to: end === null ? to : current.from + end, insert },
-          selection: { anchor: from + insert.length },
-          annotations: pickedCompletion.of(completion),
-          userEvent: 'input.complete',
-        });
-      },
-    }),
-  );
-  return { from: line.from + start, options, validFor: /^[^"]*$/ };
+  const activities = (exclude: string[], apply: (name: string) => Completion['apply']) =>
+    Object.entries(catalog())
+      .filter(([name]) => !exclude.includes(name))
+      .map(([name, entry]): Completion => ({ label: name, detail: `${entry.duration} min`, info: entry.description, apply: apply(name) }));
+
+  if (start !== null) {
+    const found = contextAt(context.state, line.from + start - 1)?.activities;
+    const options = activities(found?.exclude ?? [], (name) => (view, completion, from, to) => {
+      const current = view.state.doc.lineAt(to);
+      const end = closingQuote(current.text, to - current.from);
+      const insert = `${name}"${found?.header && end === null ? ':' : ''}`;
+      view.dispatch({
+        changes: { from, to: end === null ? to : current.from + end, insert },
+        selection: { anchor: from + insert.length },
+        annotations: pickedCompletion.of(completion),
+        userEvent: 'input.complete',
+      });
+    });
+    return { from: line.from + start, options, validFor: /^[^"]*$/ };
+  }
+
+  const found = contextAt(context.state, context.pos);
+  if (!found || (found.from === context.pos && found.activities === null && !context.explicit)) return null;
+  const keywords = found.keywords.flatMap((type) => {
+    const entry = dictionary.get(type);
+    return (entry?.lexemes ?? []).map((lexeme): Completion => ({ label: lexeme.value, info: entry?.description }));
+  });
+  const header = found.activities?.header ? ':' : '';
+  const named = found.activities ? activities(found.activities.exclude, (name) => `"${name}"${header}`) : [];
+  return { from: found.from, options: [...keywords, ...named], validFor: /^[\w-]*$/ };
 };
 
 // The rule text editor. The view owns the text and reports each edit through `onChange`. A `value` that differs from
 // the text, such as after a reset or a rename, goes in as an undoable change. Remount it to start a fresh history.
 // `tokens` and `diagnostics` belong to `value` and are drawn over the text. Hovering a token reports it through
 // `setActive`, and `linked` lights up the tokens behind the hovered timeline row. Typing inside quotes suggests the
-// activities in `catalog`, and hovering one shows its catalog entry.
+// activities in `catalog`, elsewhere what the rule grammar allows there, and hovering an activity shows its catalog
+// entry.
 export function RuleEditor({
   value,
   onChange,
@@ -169,7 +186,8 @@ export function RuleEditor({
           marks,
           tokenTooltip(() => activities.current),
           lintGutter(),
-          autocompletion({ override: [activityCompletion(() => activities.current)] }),
+          ruleLanguage,
+          autocompletion({ override: [ruleCompletion(() => activities.current)] }),
           EditorView.contentAttributes.of({ 'aria-label': 'Rule text', spellcheck: 'false' }),
           EditorView.updateListener.of((update) => {
             if (update.docChanged && !update.transactions.some((tr) => tr.annotation(external)))
