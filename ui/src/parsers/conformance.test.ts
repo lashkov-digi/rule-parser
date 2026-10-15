@@ -51,5 +51,17 @@ for (const parser of parsers) {
         assert.deepEqual(withoutMessages(parser.parse(text)), withoutMessages(expected));
       });
     }
+
+    test('a keyword out of place is a parse error, not an unknown word', () => {
+      const cases: Array<[string, number, number]> = [
+        ['"A": before before "B"', 12, 18],
+        ['"A": 3x pre', 8, 11],
+        ['"A": rel "B" pre, post each', 23, 27],
+      ];
+      for (const [text, from, to] of cases) {
+        const [diagnostic] = parser.parse(text).diagnostics;
+        assert.deepEqual({ code: diagnostic?.code, from: diagnostic?.from, to: diagnostic?.to }, { code: 'parse', from, to }, text);
+      }
+    });
   });
 }

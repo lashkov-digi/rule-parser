@@ -182,6 +182,12 @@ function expectedAt(prefix: string): string[] {
   });
 }
 
+// Whether the text lexes as exactly one token.
+const isToken = (piece: string) => {
+  const first = lexer.parse(piece).topNode.firstChild;
+  return first !== null && IS_TOKEN.has(first.name) && first.from === 0 && first.to === piece.length;
+};
+
 type Line = Span & { nodes: SyntaxNode[]; errors: SyntaxNode[]; words: SyntaxNode[]; leaves: SyntaxNode[] };
 
 // Splits the tree into statement lines at SEP tokens, wherever recovery left them, and files every node under its line.
@@ -197,8 +203,14 @@ function lines(top: SyntaxNode, text: string): Line[] {
       continue;
     }
     const line = result.at(-1)!;
-    // An error node over text with no token inside is a character no token matches: an unknown word, like a Word.
+    // An error node over text with no node inside is a token the parser skipped, such as a keyword out of place, or a
+    // character no token matches. Lexing its text tells them apart: the first is an unexpected token, the second an
+    // unknown word, like a Word.
     if (node.type.isError && (node.firstChild !== null || node.from === node.to)) line.errors.push(node);
+    else if (node.type.isError && isToken(text.slice(node.from, node.to))) {
+      line.errors.push(node);
+      line.leaves.push(node);
+    }
     else if (node.type.isError || node.name === 'Word') line.words.push(node);
     else if (IS_TOKEN.has(node.name)) line.leaves.push(node);
     else if (node.name === 'Line' || node.name === 'Slot') line.nodes.push(node);
