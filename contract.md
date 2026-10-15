@@ -43,7 +43,7 @@ type Diagnostic = Span & {
   severity: 'error' | 'warning';
   code: 'lex' | 'parse' | 'semantic';
   message: string;          // human text, free per library
-  expected?: string[];      // token names valid at this position, for errors and autocomplete
+  expected?: string[];      // token names valid at this position, shown with the error
 };
 ```
 
@@ -209,7 +209,7 @@ The UI is built by hand and is out of scope for the parser task. This section on
 
 | Component | Reads | Shows |
 | --- | --- | --- |
-| `RuleEditor` | input text, `diagnostics` | Text editor. Underlines each diagnostic span. Offers `expected` tokens as completions. |
+| `RuleEditor` | input text, `tokens`, `diagnostics`, `DayConfig.activities` | CodeMirror editor. Colours each token, underlines each diagnostic span, and on hover shows the token with its description, plus the catalog entry for an activity. Completion reads the Lezer syntax tree, not `expected`: keywords that fit at the cursor, and catalog activities without the subject and the targets already listed. |
 | `CommandList` | `ParseResult` | Parsed commands grouped by `subject`, in written order. Proves what the parser understood. |
 | `CommandCard` | one `Command` | One card per `type`. Reads only the typed fields, never `source` text. Hovering it highlights `source` in the editor. |
 | `ItemsTable` | `TimelineResult` | Table: At (relative to `anchorAt`, with the window), Gap, State, Activity, Duration, and a summary row. Built in `ui/`. |

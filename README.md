@@ -46,7 +46,8 @@ The text has two modes, picked by the first token:
 | [`task.md`](task.md) | The library comparison task, how to add a library, and the evaluation criteria |
 | [`comparison.md`](comparison.md) | Results, one column per library |
 | `fixtures/` | Input texts with their expected parse output (`*.parse.json`), day config and timeline items (`*.items.json`) |
-| `ui/` | React + Vite app: parser picker, editable input, diagnostics and the items table |
+| `ui/` | React + Vite app: parser picker, CodeMirror rule editor, diagnostics and the items table |
+| `ui/src/completion.ts` | What the rule editor suggests at the cursor, read from the Lezer syntax tree |
 | `ui/src/parsers/` | One folder per library behind the `RuleParser` interface, plus the shared conformance test and benchmarks |
 | `ui/src/derivation/` | Library-independent `derive()` that turns commands into timeline items |
 
@@ -68,6 +69,20 @@ After editing `lexemes.md`, regenerate the JSON files:
 node generate-lexemes.mjs     # lexemes.json
 node generate-scenarios.mjs   # fixtures/scenarios.json, needs lexemes.json first
 ```
+
+## Rule editor
+
+`RuleEditor` is a CodeMirror 6 editor. It colours the tokens of the picked parser, underlines its diagnostics and those of the derivation, and shows a token's description on hover. Hovering an activity also shows its catalog entry: duration and description.
+
+Completion suggests what fits at the cursor: keywords such as `before` or `pre` after `rel "IP"`, and catalog activities with their quotes. Inside quotes it lists the activities that match what is typed. The subject and the targets already listed are left out. Activity lists open on their own; keywords wait for a letter or Ctrl+Space.
+
+Completion always runs on the Lezer grammar, whichever parser the picker shows. The editor loads it as a CodeMirror language and reads the live syntax tree, which knows the subject, the statement kind and the targets so far. A new parser adapter changes the tokens and diagnostics, not the suggestions.
+
+Known limits:
+
+- Whether the cursor sits inside an activity name is read from the line text (an odd number of quotes before it). It copies the grammar's name rule, so a grammar change to quoted strings needs it too.
+- The context rules in `completion.ts` are written by hand from the grammar and have to follow its changes.
+- A multi-word name typed without its opening quote is completed over its last word only.
 
 ## Adding a library
 
