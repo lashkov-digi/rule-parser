@@ -170,6 +170,20 @@ test('a hospitalization from an activity that runs 0 times is reported, not thro
   assert.ok(diagnostics.some((diagnostic) => diagnostic.message === '"Pollen" never runs, so the hospitalization has no start'));
 });
 
+test('travel between on-site slots counts once in the day with travel', () => {
+  // `sequence; "A" 15m; travel 30m; "B" 10m`: the travel sits inside the on-site span, so it adds nothing on top.
+  const slot = (id: string, kind: 'activity' | 'travel', duration: number, activity: string | null) =>
+    ({ id, type: 'slot', kind, activity, duration, source: { from: 0, to: 0 } }) as const;
+  const parse: ParseResult = {
+    version: 1,
+    mode: 'sequence',
+    commands: [slot('c1', 'activity', 15, 'A'), slot('c2', 'travel', 30, null), slot('c3', 'activity', 10, 'B')],
+    diagnostics: [],
+  };
+  const { summary } = derive(parse, { activities: {}, cdtOrder: [] });
+  assert.deepEqual(summary, { onSite: 55, withTravel: 55 });
+});
+
 test('an activity missing from the catalog is reported, not thrown', () => {
   const parse = fixture<ParseResult>('product-scenario.parse.json');
   const config = fixture<DayConfig>('product-scenario.config.json');
