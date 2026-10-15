@@ -130,11 +130,14 @@ export function deriveRules(commands: Command[], config: DayConfig): Draft {
   let anchorAt: Minutes | null = null;
   if (anchor?.kind === 'activity') {
     const [first, ...rest] = of(anchor.name);
-    if (rest.length > 0) report(composites[0].source, 'warning', `"${anchor.name}" runs more than once; offsets use the first`);
-    first.start = 0;
-    first.fixed = true;
-    first.isAnchor = true;
-    anchorAt = 0;
+    if (!first) report(composites[0].source, 'warning', `"${anchor.name}" never runs, so it cannot anchor the day`);
+    else {
+      if (rest.length > 0) report(composites[0].source, 'warning', `"${anchor.name}" runs more than once; offsets use the first`);
+      first.start = 0;
+      first.fixed = true;
+      first.isAnchor = true;
+      anchorAt = 0;
+    }
   }
   for (const rule of composites) {
     if (JSON.stringify(rule.anchor) !== JSON.stringify(anchor)) {
@@ -152,7 +155,9 @@ export function deriveRules(commands: Command[], config: DayConfig): Draft {
     const edge = rule.edge === 'end' ? (anchored?.duration ?? 0) : 0;
     let previousAfter = -1;
     rule.offsets.forEach((offset, i) => {
+      // A count written before the composite wins, and setCount reported the clash, so later offsets have no occurrence.
       const occurrence = of(rule.subject)[i];
+      if (!occurrence) return;
       occurrence.fixed = true;
       if (offset.kind === 'pre') {
         if (rule.anchor.kind === 'day') report(rule.source, 'error', '`pre` needs an activity anchor');
@@ -354,7 +359,12 @@ export function deriveRules(commands: Command[], config: DayConfig): Draft {
       report(rule.source, 'warning', 'A hospitalization cannot start at day-end');
       continue;
     }
-    const start = rule.from.kind === 'activity' ? of(rule.from.name)[0].start! : dayStart;
+    const first = rule.from.kind === 'activity' ? of(rule.from.name)[0] : null;
+    if (rule.from.kind === 'activity' && !first) {
+      report(rule.source, 'warning', `"${rule.from.name}" never runs, so the hospitalization has no start`);
+      continue;
+    }
+    const start = first ? first.start! : dayStart;
     blocks.push(block({ kind: 'hospitalization', start, duration: rule.duration, commandIds: [rule.id] }));
   }
 
