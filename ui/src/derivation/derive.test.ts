@@ -124,6 +124,36 @@ test('a post offset counts from the anchor edge, not from earlier draws', () => 
   assert.deepEqual(draws(), [-5, 61, 121]);
 });
 
+test('a count below the offsets of a composite is reported, not thrown', () => {
+  // `2x` before `3x rel "IP Administration" pre, post 1h 2h`: the written count wins, so the third offset has no draw.
+  const parse = fixture<ParseResult>('product-scenario.parse.json');
+  parse.commands.unshift({ id: 'c0', type: 'count', subject: 'PK sampling', count: 2, source: { from: 15, to: 17 } });
+  const { items, diagnostics } = derive(parse, fixture<DayConfig>('product-scenario.config.json'));
+  assert.equal(items.filter((item) => item.activities[0] === 'PK sampling').length, 2);
+  assert.ok(diagnostics.some((diagnostic) => diagnostic.message === '"PK sampling" already runs 2 times'));
+});
+
+test('an anchor that runs 0 times is reported, not thrown', () => {
+  const parse = fixture<ParseResult>('product-scenario.parse.json');
+  parse.commands.push({ id: 'c4', type: 'count', subject: 'IP Administration', count: 0, source: { from: 138, to: 140 } });
+  const { items, diagnostics } = derive(parse, fixture<DayConfig>('product-scenario.config.json'));
+  assert.equal(items.filter((item) => item.activities[0] === 'IP Administration').length, 0);
+  assert.ok(diagnostics.some((diagnostic) => diagnostic.message === '"IP Administration" never runs, so it cannot anchor the day'));
+});
+
+test('a hospitalization from an activity that runs 0 times is reported, not thrown', () => {
+  const parse = fixture<ParseResult>('product-scenario.parse.json');
+  parse.commands.push(
+    { id: 'c4', type: 'count', subject: 'Pollen', count: 0, source: { from: 138, to: 140 } },
+    { id: 'c5', type: 'hospitalization', subject: 'Pollen', duration: 360, from: { kind: 'activity', name: 'Pollen' }, source: { from: 141, to: 165 } },
+  );
+  const config = fixture<DayConfig>('product-scenario.config.json');
+  config.activities.Pollen = { duration: 4 };
+  const { items, diagnostics } = derive(parse, config);
+  assert.equal(items.filter((item) => item.kind === 'hospitalization').length, 0);
+  assert.ok(diagnostics.some((diagnostic) => diagnostic.message === '"Pollen" never runs, so the hospitalization has no start'));
+});
+
 test('an activity missing from the catalog is reported, not thrown', () => {
   const parse = fixture<ParseResult>('product-scenario.parse.json');
   const config = fixture<DayConfig>('product-scenario.config.json');

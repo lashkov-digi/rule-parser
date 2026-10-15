@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { derive, type DayConfig } from './derivation/index.ts';
+import { derive, type DayConfig, type ParseResult } from './derivation/index.ts';
 import scenariosJson from '../../fixtures/scenarios.json';
 import { CatalogEditor } from './components/CatalogEditor';
 import { DiagnosticList } from './components/DiagnosticList';
@@ -12,12 +12,23 @@ import type { Scenario } from './timeline';
 
 const scenarios = scenariosJson as unknown as Scenario[];
 
+const message = (error: unknown) => (error instanceof Error ? error.message : String(error));
+
 // Runs a parser on the text. A parser that throws shows its error instead of a timeline.
 function run(parser: RuleParser, text: string) {
   try {
     return { tokens: parser.tokenize(text).tokens, parse: parser.parse(text), error: null };
   } catch (error) {
-    return { tokens: [], parse: null, error: error instanceof Error ? error.message : String(error) };
+    return { tokens: [], parse: null, error: message(error) };
+  }
+}
+
+// Derives the timeline. A derivation that throws shows its error instead, so the editor stays usable.
+function timelineOf(parse: ParseResult, config: DayConfig) {
+  try {
+    return { timeline: derive(parse, config), error: null };
+  } catch (error) {
+    return { timeline: null, error: message(error) };
   }
 }
 
@@ -52,7 +63,8 @@ export function App() {
   const editable = parser.id !== FIXTURES;
   const shownText = editable ? text : scenario.text;
   const result = useMemo(() => run(parser, shownText), [parser, shownText]);
-  const timeline = useMemo(() => result.parse && derive(result.parse, config), [result, config]);
+  const derived = useMemo(() => (result.parse ? timelineOf(result.parse, config) : null), [result, config]);
+  const timeline = derived?.timeline ?? null;
 
   // A removed activity leaves the CDT order too, so a later one with the same name starts at the end.
   const editCatalog = (activities: DayConfig['activities']) =>
@@ -200,7 +212,7 @@ export function App() {
         <main className="panel">
           <section>
             <h2>Timeline</h2>
-            {timeline ? <ItemsTable timeline={timeline} linked={linked} setActive={setActiveItem} /> : <p className="parser-error">{result.error}</p>}
+            {timeline ? <ItemsTable timeline={timeline} linked={linked} setActive={setActiveItem} /> : <p className="parser-error">{result.error ?? derived?.error}</p>}
           </section>
         </main>
 
