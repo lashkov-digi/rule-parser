@@ -31,7 +31,9 @@ export function finish(draft: Draft, config: DayConfig): TimelineResult {
   const present = filled.filter(onSite);
   const dayStart = present.length > 0 ? Math.min(...present.map((b) => b.start)) : 0;
   const dayEnd = present.length > 0 ? Math.max(...present.map((b) => b.start + b.duration)) : 0;
-  const travel = filled.filter((b) => b.kind === 'travel').reduce((sum, b) => sum + b.duration, 0);
+  // Only travel outside the on-site span adds to the day. Travel between on-site blocks is already inside it.
+  const outside = (b: Block) => b.duration - Math.max(0, Math.min(b.start + b.duration, dayEnd) - Math.max(b.start, dayStart));
+  const travel = filled.filter((b) => b.kind === 'travel').reduce((sum, b) => sum + outside(b), 0);
 
   const totals = new Map<string, number>();
   for (const b of filled) if (b.activities.length === 1) totals.set(b.activities[0], (totals.get(b.activities[0]) ?? 0) + 1);
