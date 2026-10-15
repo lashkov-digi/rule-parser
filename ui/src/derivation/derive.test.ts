@@ -124,6 +124,22 @@ test('a post offset counts from the anchor edge, not from earlier draws', () => 
   assert.deepEqual(draws(), [-5, 61, 121]);
 });
 
+test('a second composite on the same subject is reported and skipped, not written over the first', () => {
+  // `rel "IP Administration" post 3h` under "PK sampling" again: the first composite keeps its draws.
+  const parse = fixture<ParseResult>('product-scenario.parse.json');
+  const composite = parse.commands.find((command) => command.type === 'composite');
+  assert.ok(composite?.type === 'composite');
+  parse.commands.push({ ...composite, id: 'c4', count: null, offsets: [{ kind: 'post', after: 180, window: null }], source: { from: 138, to: 168 } });
+  const { items, diagnostics } = derive(parse, fixture<DayConfig>('product-scenario.config.json'));
+  const start = (name: string) =>
+    items
+      .filter((item) => item.kind === 'activity' && item.activities[0] === name)
+      .map((item) => (item.placement.kind === 'fixed' ? item.placement.start : NaN));
+  const [ip] = start('IP Administration');
+  assert.deepEqual(start('PK sampling').map((at) => at - ip), [-5, 60, 120]);
+  assert.ok(diagnostics.some((diagnostic) => diagnostic.message === '"PK sampling" already has offsets; this rule is skipped'));
+});
+
 test('a count below the offsets of a composite is reported, not thrown', () => {
   // `2x` before `3x rel "IP Administration" pre, post 1h 2h`: the written count wins, so the third offset has no draw.
   const parse = fixture<ParseResult>('product-scenario.parse.json');

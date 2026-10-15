@@ -139,6 +139,8 @@ export function deriveRules(commands: Command[], config: DayConfig): Draft {
       anchorAt = 0;
     }
   }
+  // Offset i fixes occurrence i of the subject, so a second composite on it would move the first one's draws.
+  const placed = new Set<string>();
   for (const rule of composites) {
     if (JSON.stringify(rule.anchor) !== JSON.stringify(anchor)) {
       report(rule.source, 'warning', 'The POC derivation supports one anchor per day; this rule is skipped');
@@ -148,6 +150,11 @@ export function deriveRules(commands: Command[], config: DayConfig): Draft {
       report(rule.source, 'warning', 'The POC derivation does not support day-end yet');
       continue;
     }
+    if (placed.has(rule.subject)) {
+      report(rule.source, 'warning', `"${rule.subject}" already has offsets; this rule is skipped`);
+      continue;
+    }
+    placed.add(rule.subject);
     // A post offset counts from the anchor's edge, its start unless the rule says `end`, as a protocol reads
     // "2h post-dose". Earlier draws do not push later ones back: "post 1h 2h" after an IP at T 0 puts the draws at
     // T+1:00 and T+2:00, or at T+1:01 and T+2:01 after a 1 min IP with `end`.
