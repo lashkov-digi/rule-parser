@@ -184,6 +184,18 @@ test('travel between on-site slots counts once in the day with travel', () => {
   assert.deepEqual(summary, { onSite: 55, withTravel: 55 });
 });
 
+test('an activity that is only a target is reported at the rule that names it', () => {
+  // `"Pollen": after "Zap"`, with Zap missing from the catalog: the error points at that rule, not at the first one.
+  const parse = fixture<ParseResult>('product-scenario.parse.json');
+  const source = { from: 138, to: 160 };
+  parse.commands.push({ id: 'c4', type: 'dependency', subject: 'Pollen', count: null, direction: 'after', targets: ['Zap'], source });
+  const config = fixture<DayConfig>('product-scenario.config.json');
+  config.activities.Pollen = { duration: 4 };
+  const { diagnostics } = derive(parse, config);
+  const missing = diagnostics.find((diagnostic) => diagnostic.message === '"Zap" is not in the activity catalog');
+  assert.deepEqual(missing && { from: missing.from, to: missing.to }, source);
+});
+
 test('an activity missing from the catalog is reported, not thrown', () => {
   const parse = fixture<ParseResult>('product-scenario.parse.json');
   const config = fixture<DayConfig>('product-scenario.config.json');

@@ -46,13 +46,16 @@ export function deriveRules(commands: Command[], config: DayConfig): Draft {
     else report(command.source, 'warning', `The POC derivation does not support ${command.type} rules yet`);
   }
 
-  // Every activity the text mentions, with its duration from the catalog.
-  const names = new Set<string>();
+  // Every activity the text mentions, with the rule that first mentions it and its duration from the catalog.
+  const names = new Map<string, Span>();
+  const mention = (name: string, source: Span) => {
+    if (!names.has(name)) names.set(name, source);
+  };
   for (const rule of rules) {
-    names.add(rule.subject);
-    if (rule.type === 'dependency') rule.targets.forEach((target) => names.add(target));
-    if (rule.type === 'composite' && rule.anchor.kind === 'activity') names.add(rule.anchor.name);
-    if (rule.type === 'hospitalization' && rule.from.kind === 'activity') names.add(rule.from.name);
+    mention(rule.subject, rule.source);
+    if (rule.type === 'dependency') rule.targets.forEach((target) => mention(target, rule.source));
+    if (rule.type === 'composite' && rule.anchor.kind === 'activity') mention(rule.anchor.name, rule.source);
+    if (rule.type === 'hospitalization' && rule.from.kind === 'activity') mention(rule.from.name, rule.source);
   }
   const duration = (name: string, source: Span) => {
     const found = config.activities[name]?.duration;
@@ -95,10 +98,10 @@ export function deriveRules(commands: Command[], config: DayConfig): Draft {
   const waiting = (name: string, position: 'before' | 'after') =>
     waits.filter((rule) => rule.subject === name && rule.position === position).reduce((sum, rule) => sum + rule.duration, 0);
 
-  // Occurrences.
-  const sourceOf = (name: string) => rules.find((rule) => rule.subject === name)?.source ?? rules[0].source;
+  // Occurrences. A diagnostic about an activity points at its own rule, or else at the rule that first mentions it.
+  const sourceOf = (name: string) => rules.find((rule) => rule.subject === name)?.source ?? names.get(name)!;
   const occurrences = new Map<string, Occurrence[]>();
-  for (const name of names) {
+  for (const name of names.keys()) {
     const each = duration(name, sourceOf(name));
     const commandIds = rules
       .filter((rule) => rule.type === 'count' || rule.type === 'dependency' || rule.type === 'composite')
