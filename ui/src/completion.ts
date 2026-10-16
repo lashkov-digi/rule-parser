@@ -2,6 +2,7 @@
 // editor state, so it is tested without a DOM.
 import { ensureSyntaxTree, syntaxTree } from '@codemirror/language';
 import type { EditorState } from '@codemirror/state';
+import { activityName } from './timeline.ts';
 
 export type Context = {
   from: number; // where the word being typed starts; suggestions replace it
@@ -19,7 +20,6 @@ export function contextAt(state: EditorState, pos: number): Context | null {
   const line = doc.lineAt(pos);
   const from = pos - /[\w-]*$/.exec(line.text.slice(0, pos - line.from))![0].length;
   const tree = ensureSyntaxTree(state, from) ?? syntaxTree(state);
-  const name = (text: string) => text.slice(1, -1);
 
   // The tokens of the statement line before the word being typed, and the block of the last header so far: its
   // subject, or the anchor its placements are measured from. A separator starts a new line. Error nodes and unknown
@@ -38,7 +38,7 @@ export function contextAt(state: EditorState, pos: number): Context | null {
       // Error recovery reads a lone `"Name"` as a header without its colon, so a header counts once the colon is written.
       if (node.name === 'Header' && node.node.getChild('COLON')) {
         const activity = node.node.getChild('ACTIVITY');
-        const header = activity && name(doc.sliceString(activity.from, activity.to));
+        const header = activity && activityName(doc.sliceString(activity.from, activity.to));
         if (node.node.getChild('ANCHOR')) [subject, anchor] = [null, header];
         else if (header) [subject, anchor] = [header, null];
       }
@@ -63,9 +63,9 @@ export function contextAt(state: EditorState, pos: number): Context | null {
     if (types.length === 1) return result([], activities([], true));
     statement = leaves.slice(3);
     if (types[2] !== 'COLON') return null;
-    [subject, anchor] = [null, name(leaves[1].text)];
+    [subject, anchor] = [null, activityName(leaves[1].text)];
   } else if (types[0] === 'ACTIVITY' && types[1] === 'COLON') {
-    [subject, anchor] = [name(leaves[0].text), null];
+    [subject, anchor] = [activityName(leaves[0].text), null];
     statement = leaves.slice(2);
   } else if (types.length === 0 && !/^\s/.test(line.text)) {
     return result(anyBefore ? ['ANCHOR'] : ['ANCHOR', 'SEQUENCE'], activities([], true));
@@ -74,7 +74,7 @@ export function contextAt(state: EditorState, pos: number): Context | null {
   const own = subject === null ? [] : [subject];
   const kinds = statement.map((leaf) => leaf.type);
   const last = kinds.at(-1);
-  const listed = statement.filter((leaf) => leaf.type === 'ACTIVITY').map((leaf) => name(leaf.text));
+  const listed = statement.filter((leaf) => leaf.type === 'ACTIVITY').map((leaf) => activityName(leaf.text));
 
   // An anchor block holds placements only: `"Name" [COUNT]` and then offsets from the anchor or a direction.
   if (anchor !== null) {

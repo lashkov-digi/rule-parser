@@ -9,7 +9,7 @@ import { TokenView } from './components/TokenView';
 import { createFixtureParser, FIXTURES } from './parsers/fixtures/index.ts';
 import { parsers } from './parsers/registry.ts';
 import type { RuleParser } from './parsers/types.ts';
-import type { Scenario } from './timeline';
+import { activityName, type Scenario } from './timeline';
 
 const scenarios = scenariosJson as unknown as Scenario[];
 
@@ -79,7 +79,7 @@ export function App() {
     if (editable) edit(text.replaceAll(`"${from}"`, `"${to}"`));
   };
   // Activity names in the text, in written order. Sequence mode writes durations in the text and has no catalog.
-  const mentioned = [...new Set(result.tokens.filter((token) => token.type === 'ACTIVITY').map((token) => token.text.slice(1, -1)))];
+  const mentioned = [...new Set(result.tokens.filter((token) => token.type === 'ACTIVITY').map((token) => activityName(token.text)))];
   // Tokens behind each row, by index into result.tokens: every token of the commands that placed it. Offset i of a
   // composite fixes occurrence i + 1 of its subject, so each offset belongs only to that occurrence: `post 1h` to
   // "PK sampling · 2 of 3", not to draws 1 and 3. A derived wait has no command of its own. It is the gap before a row
@@ -154,7 +154,7 @@ export function App() {
   const linked = useMemo(() => {
     const token = activeToken === null ? undefined : result.tokens[activeToken];
     if (activeToken === null || !token || !timeline) return new Set<string>();
-    const name = byName && token.type === 'ACTIVITY' ? token.text.slice(1, -1) : null;
+    const name = byName && token.type === 'ACTIVITY' ? activityName(token.text) : null;
     return new Set(
       timeline.items
         .filter((item) => (name === null ? rowTokens.get(item.id)?.has(activeToken) : item.activities.includes(name)))
@@ -168,7 +168,7 @@ export function App() {
     const item = timeline?.items.find((candidate) => candidate.id === activeItem);
     if (!item) return new Set<number>();
     const named = result.tokens.flatMap((token, index) =>
-      byName && token.type === 'ACTIVITY' && item.activities.includes(token.text.slice(1, -1)) ? [index] : [],
+      byName && token.type === 'ACTIVITY' && item.activities.includes(activityName(token.text)) ? [index] : [],
     );
     return new Set([...(rowTokens.get(item.id) ?? []), ...named]);
   }, [activeItem, result, timeline, rowTokens, byName]);

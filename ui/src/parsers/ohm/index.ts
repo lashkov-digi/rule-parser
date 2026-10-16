@@ -1,7 +1,7 @@
 // Ohm adapter: the grammar is in ./grammar.ohm, this file turns its matches into tokens, commands and diagnostics.
 import type { MatchResult, Node } from 'ohm-js';
 import type { Anchor, Command, Diagnostic, Minutes, RuleCommand, SlotCommand, Span } from '../../derivation/index.ts';
-import type { Token } from '../../timeline.ts';
+import { activityName, type Token } from '../../timeline.ts';
 import type { RuleParser } from '../types.ts';
 import grammar from './grammar.ohm';
 
@@ -18,7 +18,7 @@ type Line = { header: Header | null; statement: Statement | null };
 
 // --- semantics -----------------------------------------------------------------------------------------------
 
-const name = (node: Node) => node.sourceString.slice(1, -1);
+const name = (node: Node) => activityName(node.sourceString);
 const integer = (node: Node) => parseInt(node.sourceString, 10);
 const minutes = (node: Node): Minutes => {
   const [, value, unit] = /^([\d.]+)(min|m|h)$/.exec(node.sourceString)!;

@@ -18,7 +18,7 @@ import type { DayConfig, Diagnostic } from '../derivation/index.ts';
 import { closingQuote, lintDiagnostics, openQuote, tokenAt, tokenMarks } from '../editor.ts';
 import { dictionary, kindOf } from '../lexemes.ts';
 import { ruleLanguage } from '../parsers/lezer/language.ts';
-import type { Token } from '../timeline.ts';
+import { activityName, type Token } from '../timeline.ts';
 
 // The one change that turns `from` into `to`: everything between their common prefix and common suffix. Reset and
 // rename come in as a new value, and replacing only the middle keeps the cursor and the undo history around it.
@@ -68,7 +68,7 @@ const tokenTooltip = (catalog: () => DayConfig['activities']) =>
         kind.className = 'muted';
         kind.textContent = ` ${kindOf(token.type)} `;
         dom.append(dictionary.get(token.type)?.description ?? '');
-        if (token.type === 'ACTIVITY') dom.append(activityInfo(token.text.slice(1, -1), catalog()));
+        if (token.type === 'ACTIVITY') dom.append(activityInfo(activityName(token.text), catalog()));
         return { dom };
       },
     };

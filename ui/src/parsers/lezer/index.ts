@@ -1,7 +1,7 @@
 // Lezer adapter: the grammar is in ./rules.grammar, this file turns its tree into tokens, commands and diagnostics.
 import type { SyntaxNode } from '@lezer/common';
 import type { Anchor, Command, Diagnostic, Minutes, Offset, RuleCommand, SlotCommand, Span } from '../../derivation/index.ts';
-import type { Token } from '../../timeline.ts';
+import { activityName, type Token } from '../../timeline.ts';
 import type { RuleParser } from '../types.ts';
 import { parser } from './rules.grammar';
 
@@ -37,7 +37,7 @@ const QUALIFIER = { '=': 'exactly', '~': 'approximately', approx: 'approximately
 // Reads values out of the tree. Lezer nodes carry offsets only, so every read needs the text.
 function reader(text: string) {
   const source = (node: SyntaxNode) => text.slice(node.from, node.to);
-  const name = (node: SyntaxNode) => source(node).slice(1, -1);
+  const name = (node: SyntaxNode) => activityName(source(node));
   const integer = (node: SyntaxNode) => parseInt(source(node), 10);
   const minutes = (node: SyntaxNode): Minutes => {
     const [, value, unit] = /^([\d.]+)(min|m|h)$/.exec(source(node))!;
@@ -141,7 +141,7 @@ function reader(text: string) {
     return { type: 'slot', kind: state ? (source(state) as 'fast' | 'wait') : 'travel', activity: null, duration };
   };
 
-  return { source, header, placement, rule, slot };
+  return { source, name, header, placement, rule, slot };
 }
 
 // --- adapter -------------------------------------------------------------------------------------------------
@@ -265,7 +265,7 @@ function parse(text: string) {
 
     if (statement.name === 'Placement') {
       if (block?.kind === 'anchor')
-        bodies.push({ subject: read.source(statement.getChild('ACTIVITY')!).slice(1, -1), body: read.placement(statement, block.name), source: where });
+        bodies.push({ subject: read.name(statement.getChild('ACTIVITY')!), body: read.placement(statement, block.name), source: where });
       else error('parse', 'A placement is only valid inside an anchor block', where);
       return;
     }

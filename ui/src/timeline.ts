@@ -6,6 +6,9 @@ export type { Item, Minutes, TimelineResult } from './derivation/index.ts';
 // One lexed token, as defined in ../../contract.md. Offsets point into the scenario text.
 export type Token = { type: string; text: string; from: number; to: number };
 
+// The activity name in the text of an ACTIVITY token: `"Vital Signs"` is Vital Signs.
+export const activityName = (text: string) => text.slice(1, -1);
+
 export type Scenario = {
   id: string;
   title: string;
